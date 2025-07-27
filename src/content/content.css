@@ -1,0 +1,161 @@
+.prs-ai-container {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #d1d9e0;
+  border-radius: 8px;
+  background: #f6f8fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+    Helvetica, Arial, sans-serif;
+}
+
+.prs-ai-button-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.prs-ai-generate-btn,
+.prs-ai-regenerate-btn,
+.prs-ai-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #24292f;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.prs-ai-generate-btn:hover:not(:disabled),
+.prs-ai-regenerate-btn:hover,
+.prs-ai-settings-btn:hover {
+  background: #f3f4f6;
+  border-color: #afb8c1;
+}
+
+.prs-ai-generate-btn:disabled {
+  background: #f6f8fa;
+  color: #656d76;
+  cursor: not-allowed;
+  border-color: #d1d9e0;
+}
+
+.prs-ai-generate-btn {
+  background: #2da44e;
+  color: #ffffff;
+  border-color: #2da44e;
+}
+
+.prs-ai-generate-btn:hover:not(:disabled) {
+  background: #2c974b;
+  border-color: #2c974b;
+}
+
+.prs-ai-regenerate-btn {
+  background: #0969da;
+  color: #ffffff;
+  border-color: #0969da;
+}
+
+.prs-ai-regenerate-btn:hover {
+  background: #0860ca;
+  border-color: #0860ca;
+}
+
+.prs-ai-settings-btn svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+.prs-ai-status {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.prs-ai-status--success {
+  background: #dafbe1;
+  color: #1a7f37;
+  border: 1px solid #2da44e;
+}
+
+.prs-ai-status--error {
+  background: #ffebe9;
+  color: #cf222e;
+  border: 1px solid #ff818266;
+}
+
+.prs-ai-status--loading {
+  background: #dbeafe;
+  color: #0969da;
+  border: 1px solid #0969da;
+  position: relative;
+}
+
+.prs-ai-status--loading::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #0969da;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: prs-ai-spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes prs-ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .prs-ai-container {
+    background: #161b22;
+    border-color: #30363d;
+  }
+
+  .prs-ai-generate-btn:not(.prs-ai-generate-btn),
+  .prs-ai-regenerate-btn:not(.prs-ai-regenerate-btn),
+  .prs-ai-settings-btn {
+    background: #21262d;
+    color: #e6edf3;
+    border-color: #30363d;
+  }
+
+  .prs-ai-generate-btn:hover:not(:disabled):not(.prs-ai-generate-btn),
+  .prs-ai-regenerate-btn:hover:not(.prs-ai-regenerate-btn),
+  .prs-ai-settings-btn:hover {
+    background: #30363d;
+    border-color: #8b949e;
+  }
+
+  .prs-ai-generate-btn:disabled {
+    background: #161b22;
+    color: #8b949e;
+    border-color: #30363d;
+  }
+}
+
+/* GitHub-specific adjustments */
+.markdown-body .prs-ai-container {
+  background: var(--color-canvas-subtle);
+  border-color: var(--color-border-default);
+}
+
+[data-color-mode='dark'] .prs-ai-container {
+  background: var(--color-canvas-subtle);
+  border-color: var(--color-border-default);
+}
