@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from '@constants';
 import { ApiConfig, PRData, PRGenerationRules } from './types';
 
 export class AIService {
@@ -7,7 +8,7 @@ export class AIService {
   ): Promise<boolean> {
     try {
       if (provider === 'openai') {
-        const response = await fetch('https://api.openai.com/v1/models', {
+        const response = await fetch(API_ENDPOINTS.OPENAI_MODELS, {
           headers: {
             Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
@@ -16,7 +17,7 @@ export class AIService {
         return response.ok;
       } else if (provider === 'gemini') {
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+          `${API_ENDPOINTS.GEMINI_MODELS}?key=${apiKey}`,
         );
         return response.ok;
       }
@@ -133,7 +134,7 @@ ${existingTemplate.description}
     : ''
 }
 
-Please respond with a JSON object containing "title" and "description" fields.`;
+Please respond with a JSON object containing "title" and "description" fields. Return ONLY the JSON object, without any markdown formatting or code blocks.`;
 
     return prompt;
   }
@@ -174,7 +175,11 @@ Please respond with a JSON object containing "title" and "description" fields.`;
     const content = data.choices[0].message.content;
 
     try {
-      return JSON.parse(content);
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      const jsonText = jsonMatch ? jsonMatch[1] : content;
+      
+      return JSON.parse(jsonText);
     } catch {
       // Fallback if JSON parsing fails
       return {
@@ -189,7 +194,7 @@ Please respond with a JSON object containing "title" and "description" fields.`;
     config: { key: string; model: string },
   ): Promise<{ title: string; description: string }> {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent`,
+      `${API_ENDPOINTS.GEMINI_MODELS}/${config.model}:generateContent`,
       {
         method: 'POST',
         headers: {
@@ -203,7 +208,7 @@ Please respond with a JSON object containing "title" and "description" fields.`;
                 {
                   text:
                     prompt +
-                    '\n\nRespond only with valid JSON containing "title" and "description" fields.',
+                    '\n\nRespond with ONLY a valid JSON object containing "title" and "description" fields. Do not use markdown formatting or code blocks.',
                 },
               ],
             },
@@ -224,7 +229,11 @@ Please respond with a JSON object containing "title" and "description" fields.`;
     const content = data.candidates[0].content.parts[0].text;
 
     try {
-      return JSON.parse(content);
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      const jsonText = jsonMatch ? jsonMatch[1] : content;
+      
+      return JSON.parse(jsonText);
     } catch {
       // Fallback if JSON parsing fails
       return {
