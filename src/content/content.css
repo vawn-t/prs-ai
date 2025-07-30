@@ -1,11 +1,64 @@
+/* CSS Custom Properties for Colors */
+:root {
+  /* Light theme colors */
+  --bg-primary: #f6f8fa;
+  --bg-secondary: #ffffff;
+  --bg-subtle: #f3f4f6;
+  --border-default: #d1d9e0;
+  --border-muted: #afb8c1;
+  --text-primary: #24292f;
+  --text-muted: #656d76;
+  
+  /* Brand colors */
+  --success: #2da44e;
+  --success-hover: #2c974b;
+  --success-bg: #dafbe1;
+  --success-text: #1a7f37;
+  
+  --primary: #0969da;
+  --primary-hover: #0860ca;
+  --primary-bg: #dbeafe;
+  
+  --error: #cf222e;
+  --error-bg: #ffebe9;
+  --error-border: #ff818266;
+  
+  /* Interactive states */
+  --disabled-bg: #f6f8fa;
+  --disabled-text: #656d76;
+  --disabled-border: #d1d9e0;
+  
+  /* Transitions */
+  --transition: all 0.2s ease;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+}
+
+/* Dark theme colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #161b22;
+    --bg-secondary: #21262d;
+    --bg-subtle: #30363d;
+    --border-default: #30363d;
+    --border-muted: #8b949e;
+    --text-primary: #e6edf3;
+    --text-muted: #8b949e;
+    --disabled-bg: #161b22;
+    --disabled-text: #8b949e;
+    --disabled-border: #30363d;
+  }
+}
+
+/* Component Styles */
 .prs-ai-container {
   margin: 16px 0;
   padding: 16px;
-  border: 1px solid #d1d9e0;
+  border: 1px solid var(--border-default);
   border-radius: 8px;
-  background: #f6f8fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
-    Helvetica, Arial, sans-serif;
+  background: var(--bg-primary);
+  font-family: var(--font-family);
 }
 
 .prs-ai-button-group {
@@ -22,51 +75,53 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border: 1px solid #d1d9e0;
+  border: 1px solid var(--border-default);
   border-radius: 6px;
-  background: #ffffff;
-  color: #24292f;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   text-decoration: none;
 }
 
 .prs-ai-generate-btn:hover:not(:disabled),
 .prs-ai-regenerate-btn:hover,
 .prs-ai-settings-btn:hover {
-  background: #f3f4f6;
-  border-color: #afb8c1;
+  background: var(--bg-subtle);
+  border-color: var(--border-muted);
 }
 
 .prs-ai-generate-btn:disabled {
-  background: #f6f8fa;
-  color: #656d76;
+  background: var(--disabled-bg);
+  color: var(--disabled-text);
   cursor: not-allowed;
-  border-color: #d1d9e0;
+  border-color: var(--disabled-border);
 }
 
+/* Generate button (success variant) */
 .prs-ai-generate-btn {
-  background: #2da44e;
+  background: var(--success);
   color: #ffffff;
-  border-color: #2da44e;
+  border-color: var(--success);
 }
 
 .prs-ai-generate-btn:hover:not(:disabled) {
-  background: #2c974b;
-  border-color: #2c974b;
+  background: var(--success-hover);
+  border-color: var(--success-hover);
 }
 
+/* Regenerate button (primary variant) */
 .prs-ai-regenerate-btn {
-  background: #0969da;
+  background: var(--primary);
   color: #ffffff;
-  border-color: #0969da;
+  border-color: var(--primary);
 }
 
 .prs-ai-regenerate-btn:hover {
-  background: #0860ca;
-  border-color: #0860ca;
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 .prs-ai-settings-btn svg {
@@ -84,40 +139,30 @@
 }
 
 .prs-ai-status--success {
-  background: #dafbe1;
-  color: #1a7f37;
-  border: 1px solid #2da44e;
+  background: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success);
 }
 
 .prs-ai-status--error {
-  background: #ffebe9;
-  color: #cf222e;
-  border: 1px solid #ff818266;
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-border);
 }
 
-.prs-ai-status--loading {
-  background: #dbeafe;
-  color: #0969da;
-  border: 1px solid #0969da;
-  position: relative;
-}
-
-.prs-ai-status--loading::before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border: 2px solid #0969da;
+/* Loading spinner animation */
+.prs-ai-loading {
+  border: 2px solid var(--border-muted);
+  border-top: 2px solid var(--primary);
   border-radius: 50%;
-  border-top-color: transparent;
-  animation: prs-ai-spin 1s linear infinite;
-  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
 }
 
-@keyframes prs-ai-spin {
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Dark mode support */
