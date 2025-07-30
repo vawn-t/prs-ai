@@ -1,16 +1,24 @@
 import { PRGenerationRules } from '@types';
 
-// Default PR Generation Rules
+// Default PR Generation Rules - Based on Best Practices Guide
 export const DEFAULT_GENERATION_RULES: PRGenerationRules = {
+  // Content inclusion preferences
   includeFileChanges: true,
   includeCommitMessages: true,
-  maxDescriptionLength: 2000,
-  titleFormat: 'conventional',
+  
+  // Title generation settings
+  titleFormat: 'conventional', // Use conventional commits format by default
+  customTitleTemplate: undefined, // No custom template by default
+  
+  // Description settings
+  maxDescriptionLength: 2000, // Professional length for readability
+  
+  // Description sections (comprehensive structure)
   descriptionSections: {
-    summary: true,
-    changes: true,
-    testing: true,
-    breaking: true,
+    summary: true,     // ## Description - Clear explanation of what and why
+    changes: true,     // ## Changes Made - Specific bullet points
+    testing: true,     // ## Testing - How changes were verified
+    breaking: true,    // ## Breaking Changes - Critical compatibility notes
   },
 };
 

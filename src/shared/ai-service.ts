@@ -87,14 +87,16 @@ export class AIService {
     rules: PRGenerationRules,
     existingTemplate?: { title?: string; description?: string },
   ): string {
-    let prompt = `Generate a professional Pull Request title and description based on the following information:
+    // Build comprehensive prompt based on professional PR guide
+    let prompt = `You are an expert software engineer creating a professional GitHub Pull Request. Generate a high-quality PR title and description following industry best practices.
 
-**Code Changes Summary:**
-- Base branch: ${prData.baseBranch}
-- Head branch: ${prData.headBranch}
+**CODEBASE ANALYSIS:**
+- Repository: ${prData.baseBranch} ← ${prData.headBranch}
 - Files changed: ${prData.changes.length}
+- Total additions: ${prData.changes.reduce((sum, change) => sum + change.additions, 0)}
+- Total deletions: ${prData.changes.reduce((sum, change) => sum + change.deletions, 0)}
 
-**File Changes:**
+**FILE CHANGES DETAILS:**
 ${prData.changes
   .map(
     (change) =>
@@ -105,36 +107,91 @@ ${prData.changes
 ${
   rules.includeCommitMessages && prData.commitMessages.length > 0
     ? `
-**Commit Messages:**
+**COMMIT HISTORY:**
 ${prData.commitMessages.map((msg) => `- ${msg}`).join('\n')}
 `
     : ''
 }
 
-**Requirements:**
-- Title format: ${
+**TITLE REQUIREMENTS:**
+- Format: ${
       rules.titleFormat === 'conventional'
-        ? 'Conventional Commits format (type(scope): description)'
+        ? 'Conventional Commits format: type(scope): description'
         : rules.titleFormat === 'descriptive'
-        ? 'Clear, descriptive format'
-        : 'Custom format'
+        ? 'Clear, descriptive action statement'
+        : rules.customTitleTemplate
+        ? `Custom format: ${rules.customTitleTemplate}`
+        : 'Professional descriptive format'
     }
-- Max description length: ${rules.maxDescriptionLength} characters
+- Length: Maximum 72 characters, ideally under 50
+- Style: Use imperative mood (e.g., "Add feature" not "Added feature")
+- Avoid: Vague terms like "update" or "improve" without context
+
+${
+  rules.titleFormat === 'conventional'
+    ? `
+**CONVENTIONAL COMMIT TYPES:**
+- feat: New feature or functionality
+- fix: Bug fix  
+- docs: Documentation changes
+- style: Code style/formatting (no functional change)
+- refactor: Code refactoring without changing functionality
+- test: Adding or updating tests
+- chore: Maintenance tasks (dependencies, config)
+- perf: Performance improvements
+- ci: CI/CD pipeline changes
+- build: Build system changes
+`
+    : ''
+}
+
+**DESCRIPTION REQUIREMENTS:**
+- Max length: ${rules.maxDescriptionLength} characters
+- Format: Professional markdown structure
 - Include sections: ${Object.entries(rules.descriptionSections)
       .filter(([_, enabled]) => enabled)
-      .map(([section, _]) => section)
+      .map(([section, _]) => {
+        const sectionMap: Record<string, string> = {
+          summary: 'Description (what and why)',
+          changes: 'Changes Made (specific bullet points)',
+          testing: 'Testing (verification methods)',
+          breaking: 'Breaking Changes (if any)',
+        };
+        return sectionMap[section] || section;
+      })
       .join(', ')}
+
+**DESCRIPTION STRUCTURE TEMPLATE:**
+## Description
+[Clear explanation of what the PR does and why it's needed - provide business/technical context]
+
+${rules.descriptionSections.changes ? '## Changes Made\n- [Specific modifications using bullet points]\n- [Focus on key changes, e.g., "Added X feature to Y module"]\n' : ''}
+## Related Issues
+- [Link relevant issues: "Closes #123", "Fixes #456", or "N/A" if none]
+
+${rules.descriptionSections.testing ? '## Testing\n- [Describe verification methods: unit tests, manual testing, CI/CD]\n- [Mention specific test cases or scenarios covered]\n' : ''}
+${rules.descriptionSections.breaking ? '## Breaking Changes\n- [List any breaking changes affecting existing functionality]\n- [Include migration instructions if applicable, or "None" if no breaking changes]\n' : ''}
+## Additional Notes
+- [Any limitations, follow-up tasks, or reviewer instructions, or "None"]
 
 ${
   existingTemplate?.description
     ? `
-**Existing PR Template (follow this structure if provided):**
+**EXISTING PR TEMPLATE (follow this structure if provided):**
 ${existingTemplate.description}
 `
     : ''
 }
 
-Please respond with a JSON object containing "title" and "description" fields. Return ONLY the JSON object, without any markdown formatting or code blocks.`;
+**OUTPUT REQUIREMENTS:**
+- Return ONLY a valid JSON object with "title" and "description" fields
+- Title: Professional, concise, follows specified format
+- Description: Well-structured markdown following the template above
+- Ensure all specified sections are included
+- Make content specific to the actual changes shown in the file list
+- Use professional tone suitable for code review
+
+Analyze the code changes carefully and generate appropriate content that reflects the actual modifications made.`;
 
     return prompt;
   }
@@ -178,7 +235,7 @@ Please respond with a JSON object containing "title" and "description" fields. R
       // Extract JSON from markdown code blocks if present
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
       const jsonText = jsonMatch ? jsonMatch[1] : content;
-      
+
       return JSON.parse(jsonText);
     } catch {
       // Fallback if JSON parsing fails
@@ -232,7 +289,7 @@ Please respond with a JSON object containing "title" and "description" fields. R
       // Extract JSON from markdown code blocks if present
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
       const jsonText = jsonMatch ? jsonMatch[1] : content;
-      
+
       return JSON.parse(jsonText);
     } catch {
       // Fallback if JSON parsing fails
