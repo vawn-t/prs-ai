@@ -68,3 +68,9 @@ export interface TextProps {
   className?: string;
   as?: 'p' | 'span' | 'div';
 }
+
+export interface IconProps {
+  size?: number;
+  className?: string;
+  [key: string]: any; // Allow additional SVG props
+}

@@ -1,9 +1,10 @@
-interface InfoIconProps {
-  className?: string;
-  size?: number;
-}
+import { IconProps } from '@types';
 
-export const InfoIcon = ({ className = '', size = 16 }: InfoIconProps) => (
+export const InfoIcon = ({ 
+  size = 16, 
+  className = '',
+  ...props 
+}: IconProps) => (
   <svg
     width={size}
     height={size}
@@ -11,6 +12,7 @@ export const InfoIcon = ({ className = '', size = 16 }: InfoIconProps) => (
     fill='currentColor'
     className={className}
     aria-hidden='true'
+    {...props}
   >
     <path
       fillRule='evenodd'

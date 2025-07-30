@@ -2,3 +2,8 @@ export { CheckIcon } from './CheckIcon';
 export { LoadingIcon } from './LoadingIcon';
 export { ExclamationIcon } from './ExclamationIcon';
 export { InfoIcon } from './InfoIcon';
+export { SpinnerIcon } from './SpinnerIcon';
+export { StarIcon } from './StarIcon';
+export { RefreshIcon } from './RefreshIcon';
+export { SettingsIcon } from './SettingsIcon';
+export { XIcon } from './XIcon';

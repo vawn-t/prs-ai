@@ -79,13 +79,13 @@ class GeminiService {
     };
 
     try {
-      const url = this.buildUrl(
-        `${API_ENDPOINTS.GEMINI_GENERATE}/${config.model}:generateContent`,
-        config.key,
-      );
+      const url = `${API_ENDPOINTS.GEMINI_MODELS}/${config.model}:generateContent`;
 
       const response = await httpClient.post<GeminiResponse>(url, requestData, {
         timeout: 60000, // 60 seconds for generation
+        headers: {
+          'X-goog-api-key': config.key,
+        },
       });
 
       const content = response.data.candidates?.[0]?.content?.parts?.[0]?.text;

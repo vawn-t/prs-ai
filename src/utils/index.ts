@@ -3,3 +3,4 @@ export * from './dom.utils';
 export * from './github.utils';
 export * from './string.utils';
 export * from './pr-generation.utils';
+export * from './icon.utils';

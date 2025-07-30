@@ -1,12 +1,10 @@
-interface ExclamationIconProps {
-  className?: string;
-  size?: number;
-}
+import { IconProps } from '@types';
 
 export const ExclamationIcon = ({
-  className = '',
   size = 16,
-}: ExclamationIconProps) => (
+  className = '',
+  ...props
+}: IconProps) => (
   <svg
     width={size}
     height={size}
@@ -14,6 +12,7 @@ export const ExclamationIcon = ({
     fill='currentColor'
     className={className}
     aria-hidden='true'
+    {...props}
   >
     <path
       fillRule='evenodd'

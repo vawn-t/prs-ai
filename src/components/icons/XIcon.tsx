@@ -1,6 +1,6 @@
 import { IconProps } from '@types';
 
-export const CheckIcon = ({ 
+export const XIcon = ({ 
   size = 16, 
   className = '',
   ...props 
@@ -8,7 +8,7 @@ export const CheckIcon = ({
   <svg
     width={size}
     height={size}
-    viewBox='0 0 16 16'
+    viewBox='0 0 20 20'
     fill='currentColor'
     className={className}
     aria-hidden='true'
@@ -16,7 +16,7 @@ export const CheckIcon = ({
   >
     <path
       fillRule='evenodd'
-      d='M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z'
+      d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
       clipRule='evenodd'
     />
   </svg>
