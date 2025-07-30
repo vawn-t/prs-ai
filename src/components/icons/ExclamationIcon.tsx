@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ExclamationIconProps {
   className?: string;
   size?: number;

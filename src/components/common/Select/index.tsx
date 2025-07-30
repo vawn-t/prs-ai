@@ -1,4 +1,5 @@
-import React from 'react';
+import { useId } from 'react';
+
 import { SelectProps } from '@types';
 import { cn } from '@utils';
 
@@ -13,7 +14,7 @@ export const Select = ({
   required = false,
   className = '',
 }: SelectProps) => {
-  const selectId = React.useId();
+  const selectId = useId();
 
   return (
     <div className={cn('space-y-1', className)}>

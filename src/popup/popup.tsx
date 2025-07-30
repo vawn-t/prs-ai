@@ -1,9 +1,10 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
+
 import { AIService } from '@shared/ai-service';
 import { StorageService } from '@shared/storage';
 import { ApiConfig } from '@shared/types';
 import { DEFAULT_MODELS } from '@constants';
+import { Component } from 'react';
 
 interface PopupState {
   loading: boolean;
@@ -14,7 +15,7 @@ interface PopupState {
   };
 }
 
-class PopupApp extends React.Component<{}, PopupState> {
+class PopupApp extends Component<{}, PopupState> {
   constructor(props: {}) {
     super(props);
     this.state = {

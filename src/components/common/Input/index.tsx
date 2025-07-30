@@ -1,4 +1,5 @@
-import React from 'react';
+import { useId } from 'react';
+
 import { InputProps } from '@types';
 import { cn } from '@utils';
 
@@ -17,7 +18,7 @@ export const Input = ({
   min,
   max,
 }: InputProps) => {
-  const inputId = React.useId();
+  const inputId = useId();
 
   const baseClasses = cn(
     'block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400',

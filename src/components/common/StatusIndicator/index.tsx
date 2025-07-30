@@ -1,4 +1,3 @@
-import React from 'react';
 import { StatusIndicatorProps } from '@types';
 import { cn, variantClass } from '@utils';
 import { LoadingSpinner } from '../LoadingSpinner';

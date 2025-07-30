@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { StorageService } from '@shared/storage';
 import { AIService } from '@shared/ai-service';

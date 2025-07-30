@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ApiConfig } from '@types';
 import { Button, Input, Select, StatusIndicator } from '../../common';
 import { useApiConfig } from '@hooks';
@@ -32,7 +32,7 @@ export const ApiConfigForm = ({
     gemini: 'idle',
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (config) {
       setFormData(config);
     }

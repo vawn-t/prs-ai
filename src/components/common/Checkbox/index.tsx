@@ -1,4 +1,5 @@
-import React from 'react';
+import { useId } from 'react';
+
 import { cn } from '@utils';
 import { CheckIcon } from '../../icons';
 
@@ -21,7 +22,7 @@ export const Checkbox = ({
   className = '',
   id,
 }: CheckboxProps) => {
-  const checkboxId = id || React.useId();
+  const checkboxId = id || useId();
 
   return (
     <div className={cn('flex items-start space-x-2', className)}>

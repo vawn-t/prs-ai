@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PRGenerationRules } from '@types';
 import { Button, Input, Select, StatusIndicator, Checkbox } from '../../common';
 import { useGenerationRules } from '@hooks';
@@ -19,7 +19,7 @@ export const GenerationRulesForm = ({
     () => rules || DEFAULT_GENERATION_RULES,
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (rules) {
       setFormData(rules);
     }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { LoadingSpinnerProps } from '@types';
 import { cn, variantClass } from '@utils';
 

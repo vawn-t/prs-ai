@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface CheckIconProps {
   className?: string;
   size?: number;

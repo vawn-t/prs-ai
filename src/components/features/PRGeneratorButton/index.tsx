@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button, StatusIndicator } from '../../common';
 import { ApiConfig, PRGenerationRules, PRGenerationResult } from '@types';
 import { useApiConfig, useGenerationRules } from '@hooks';
