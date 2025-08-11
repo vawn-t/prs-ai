@@ -154,35 +154,55 @@ ${
 **DESCRIPTION REQUIREMENTS:**
 - Max length: ${rules.maxDescriptionLength} characters
 - Format: Professional markdown structure
-- Include sections: ${Object.entries(rules.descriptionSections)
-      .filter(([_, enabled]) => enabled)
-      .map(([section, _]) => {
-        const sectionMap: Record<string, string> = {
-          summary: 'Description (what and why)',
-          changes: 'Changes Made (specific bullet points)',
-          testing: 'Testing (verification methods)',
-          breaking: 'Breaking Changes (if any)',
-        };
-        return sectionMap[section] || section;
-      })
-      .join(', ')}
+${
+  rules.customDescriptionTemplate?.trim()
+    ? `- Use the custom template provided below
+- Customize the template content based on actual code changes
+- Keep the overall structure but replace placeholders with specific details`
+    : `- Include sections: ${Object.entries(rules.descriptionSections)
+        .filter(([_, enabled]) => enabled)
+        .map(([section, _]) => {
+          const sectionMap: Record<string, string> = {
+            summary: 'Description (what and why)',
+            changes: 'Changes Made (specific bullet points)',
+            testing: 'Testing (verification methods)',
+            breaking: 'Breaking Changes (if any)',
+          };
+          return sectionMap[section] || section;
+        })
+        .join(', ')}`
+}
 
-**DESCRIPTION STRUCTURE TEMPLATE:**
+${
+  rules.customDescriptionTemplate?.trim()
+    ? `**CUSTOM DESCRIPTION TEMPLATE:**
+${rules.customDescriptionTemplate}
+
+Use this template as the base structure, but customize the content based on the actual code changes. Replace any placeholder text with specific details from the file changes and commit messages.`
+    : `**DESCRIPTION STRUCTURE TEMPLATE:**
 ## Description
 [Clear explanation of what the PR does and why it's needed - provide business/technical context]
 
 ${
-  rules.descriptionSections.changes
-    ? '## Changes Made\n- [Specific modifications using bullet points]\n- [Focus on key changes, e.g., "Added X feature to Y module"]\n'
-    : ''
-}
+      rules.descriptionSections.changes
+        ? '## Changes Made\n- [Specific modifications using bullet points]\n- [Focus on key changes, e.g., "Added X feature to Y module"]\n'
+        : ''
+    }
 ## Related Issues
 - [Link relevant issues: "Closes #123", "Fixes #456", or "N/A" if none]
 
 ${
-  rules.descriptionSections.testing
-    ? '## Testing\n- [Describe verification methods: unit tests, manual testing, CI/CD]\n- [Mention specific test cases or scenarios covered]\n'
-    : ''
+      rules.descriptionSections.testing
+        ? '## Testing\n- [Describe verification methods: unit tests, manual testing, CI/CD]\n- [Mention specific test cases or scenarios covered]\n'
+        : ''
+    }
+${
+      rules.descriptionSections.breaking
+        ? '## Breaking Changes\n- [List any breaking changes affecting existing functionality]\n- [Include migration instructions if applicable, or "None" if no breaking changes]\n'
+        : ''
+    }
+## Additional Notes
+- [Any limitations, follow-up tasks, or reviewer instructions, or "None"]`
 }
 ${
   rules.descriptionSections.breaking

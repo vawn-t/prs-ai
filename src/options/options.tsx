@@ -469,6 +469,7 @@ const OptionsApp: React.FC = () => {
               <input
                 type='checkbox'
                 checked={state.generationRules.descriptionSections.summary}
+                disabled={!!state.generationRules.customDescriptionTemplate?.trim()}
                 onChange={(e) =>
                   updateDescriptionSection('summary', e.target.checked)
                 }
@@ -480,6 +481,7 @@ const OptionsApp: React.FC = () => {
               <input
                 type='checkbox'
                 checked={state.generationRules.descriptionSections.changes}
+                disabled={!!state.generationRules.customDescriptionTemplate?.trim()}
                 onChange={(e) =>
                   updateDescriptionSection('changes', e.target.checked)
                 }
@@ -491,6 +493,7 @@ const OptionsApp: React.FC = () => {
               <input
                 type='checkbox'
                 checked={state.generationRules.descriptionSections.testing}
+                disabled={!!state.generationRules.customDescriptionTemplate?.trim()}
                 onChange={(e) =>
                   updateDescriptionSection('testing', e.target.checked)
                 }
@@ -502,6 +505,7 @@ const OptionsApp: React.FC = () => {
               <input
                 type='checkbox'
                 checked={state.generationRules.descriptionSections.breaking}
+                disabled={!!state.generationRules.customDescriptionTemplate?.trim()}
                 onChange={(e) =>
                   updateDescriptionSection('breaking', e.target.checked)
                 }
@@ -510,6 +514,27 @@ const OptionsApp: React.FC = () => {
               <span>Breaking Changes</span>
             </div>
           </div>
+        </div>
+
+        <div className='form-group'>
+          <label>Custom Description Template</label>
+          <textarea
+            rows={8}
+            placeholder='Enter your custom description template using Markdown...&#10;&#10;Example:&#10;## 🚀 What Changed&#10;[Brief description]&#10;&#10;## 📋 Changes&#10;- Change 1&#10;- Change 2&#10;&#10;## ✅ Testing&#10;[How it was tested]'
+            value={state.generationRules.customDescriptionTemplate || ''}
+            onChange={(e) =>
+              updateGenerationRules('customDescriptionTemplate', e.target.value)
+            }
+            aria-label='Custom description template'
+          />
+          <div className='help-text'>
+            Use a custom template instead of section checkboxes. When filled, this will override the section settings above.
+          </div>
+          {state.generationRules.customDescriptionTemplate?.trim() && (
+            <div className='help-text'>
+              ✅ Custom template is active. Section checkboxes above are disabled.
+            </div>
+          )}
         </div>
       </div>
 

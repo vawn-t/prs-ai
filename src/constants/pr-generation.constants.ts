@@ -17,6 +17,7 @@ export const ENHANCED_DEFAULT_GENERATION_RULES: PRGenerationRules = {
 
   // Description constraints for readability
   maxDescriptionLength: 2000, // Sweet spot for comprehensive yet readable PRs
+  customDescriptionTemplate: undefined, // No custom template by default
 
   // Professional PR structure sections
   descriptionSections: {

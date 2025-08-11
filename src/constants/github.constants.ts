@@ -12,6 +12,7 @@ export const DEFAULT_GENERATION_RULES: PRGenerationRules = {
 
   // Description settings
   maxDescriptionLength: 2000, // Professional length for readability
+  customDescriptionTemplate: undefined, // No custom template by default
 
   // Description sections (comprehensive structure)
   descriptionSections: {

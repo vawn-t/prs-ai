@@ -19,7 +19,7 @@ An AI-powered Chrome extension that generates professional Pull Request descript
 ⚙️ **Customizable Rules**:
 
 - Title formats (Conventional Commits, Descriptive, Custom)
-- Description sections (Summary, Changes, Testing, Breaking Changes)
+- Description sections (Summary, Changes, Testing, Breaking Changes) or custom templates
 - Content length limits
 - Template integration
 

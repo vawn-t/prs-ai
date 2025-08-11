@@ -3,6 +3,7 @@ import { PRGenerationRules } from '@types';
 import { Button, Input, Select, StatusIndicator, Checkbox } from '../../common';
 import { useGenerationRules } from '@hooks';
 import { DEFAULT_GENERATION_RULES } from '@constants';
+import './GenerationRulesForm.css';
 
 interface GenerationRulesFormProps {
   onSave?: (rules: PRGenerationRules) => void;
@@ -138,57 +139,121 @@ export const GenerationRulesForm = ({
         </div>
       </div>
 
-      <div className='bg-white rounded-lg border border-gray-200 p-6'>
-        <h3 className='text-lg font-medium text-gray-900 mb-4'>
-          Description Sections
-        </h3>
+              <div className="form-section">
+          <label className="form-label">Description Sections</label>
+          <p className="form-description">
+            Choose which sections to include in the PR description
+          </p>
 
-        <div className='space-y-3'>
-          <Checkbox
-            checked={formData.descriptionSections.summary}
-            onChange={(checked) =>
-              updateField('descriptionSections', {
-                ...formData.descriptionSections,
-                summary: checked,
-              })
-            }
-            label='Include summary section'
-          />
+          <div className="checkbox-list">
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={formData.descriptionSections.summary}
+                disabled={!!formData.customDescriptionTemplate?.trim()}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    descriptionSections: {
+                      ...formData.descriptionSections,
+                      summary: e.target.checked,
+                    },
+                  })
+                }
+              />
+              <span className="checkbox-label">
+                Summary - Clear explanation of what and why
+              </span>
+            </label>
 
-          <Checkbox
-            checked={formData.descriptionSections.changes}
-            onChange={(checked) =>
-              updateField('descriptionSections', {
-                ...formData.descriptionSections,
-                changes: checked,
-              })
-            }
-            label='Include detailed changes section'
-          />
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={formData.descriptionSections.changes}
+                disabled={!!formData.customDescriptionTemplate?.trim()}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    descriptionSections: {
+                      ...formData.descriptionSections,
+                      changes: e.target.checked,
+                    },
+                  })
+                }
+              />
+              <span className="checkbox-label">
+                Changes Made - Specific bullet points
+              </span>
+            </label>
 
-          <Checkbox
-            checked={formData.descriptionSections.testing}
-            onChange={(checked) =>
-              updateField('descriptionSections', {
-                ...formData.descriptionSections,
-                testing: checked,
-              })
-            }
-            label='Include testing notes section'
-          />
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={formData.descriptionSections.testing}
+                disabled={!!formData.customDescriptionTemplate?.trim()}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    descriptionSections: {
+                      ...formData.descriptionSections,
+                      testing: e.target.checked,
+                    },
+                  })
+                }
+              />
+              <span className="checkbox-label">
+                Testing - How changes were verified
+              </span>
+            </label>
 
-          <Checkbox
-            checked={formData.descriptionSections.breaking}
-            onChange={(checked) =>
-              updateField('descriptionSections', {
-                ...formData.descriptionSections,
-                breaking: checked,
-              })
-            }
-            label='Include breaking changes section'
-          />
+            <label className="checkbox-item">
+              <input
+                type="checkbox"
+                checked={formData.descriptionSections.breaking}
+                disabled={!!formData.customDescriptionTemplate?.trim()}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    descriptionSections: {
+                      ...formData.descriptionSections,
+                      breaking: e.target.checked,
+                    },
+                  })
+                }
+              />
+              <span className="checkbox-label">
+                Breaking Changes - Critical compatibility notes
+              </span>
+            </label>
+          </div>
+
+          <div className="form-section custom-template-section">
+            <label className="form-label" htmlFor="customDescriptionTemplate">
+              Custom Description Template
+            </label>
+            <p className="form-description">
+              Use a custom template instead of section checkboxes. When filled, this will override the section settings above.
+            </p>
+            <textarea
+              id="customDescriptionTemplate"
+              className="form-textarea"
+              placeholder="Enter your custom description template using Markdown..."
+              rows={8}
+              value={formData.customDescriptionTemplate || ''}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  customDescriptionTemplate: e.target.value,
+                })
+              }
+            />
+            {formData.customDescriptionTemplate?.trim() && (
+              <p className="form-hint template-status-hint">
+                Custom template is active. Section checkboxes above are disabled.
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
       <div className='flex justify-end'>
         <Button variant='primary' onClick={handleSave}>

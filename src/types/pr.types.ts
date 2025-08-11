@@ -5,6 +5,7 @@ export interface PRGenerationRules {
   maxDescriptionLength: number;
   titleFormat: 'conventional' | 'descriptive' | 'custom';
   customTitleTemplate?: string;
+  customDescriptionTemplate?: string;
   descriptionSections: {
     summary: boolean;
     changes: boolean;
