@@ -60,7 +60,10 @@ export function validatePRTitle(
   }
 
   // General style validation
-  if (!VALIDATION_RULES.title.patterns.noUppercaseStart.test(title) && format === 'conventional') {
+  if (
+    !VALIDATION_RULES.title.patterns.noUppercaseStart.test(title) &&
+    format === 'conventional'
+  ) {
     result.warnings.push(VALIDATION_MESSAGES.title.shouldStartLowercase);
   }
 
@@ -89,7 +92,9 @@ export function validatePRDescription(description: string): ValidationResult {
   if (description.length > VALIDATION_RULES.description.maxLength) {
     result.isValid = false;
     result.errors.push(VALIDATION_MESSAGES.description.tooLong);
-  } else if (description.length > VALIDATION_RULES.description.recommendedMaxLength) {
+  } else if (
+    description.length > VALIDATION_RULES.description.recommendedMaxLength
+  ) {
     result.warnings.push(VALIDATION_MESSAGES.description.recommendedLength);
   }
 
@@ -106,13 +111,13 @@ export function parseConventionalTitle(title: string): {
   isValid: boolean;
 } {
   const match = title.match(/^([a-z]+)(\(([^)]+)\))?: (.+)$/);
-  
+
   if (!match) {
     return { isValid: false };
   }
 
   const [, type, , scope, description] = match;
-  
+
   return {
     type,
     scope,
@@ -125,34 +130,51 @@ export function parseConventionalTitle(title: string): {
  * Generate title suggestions based on file changes
  */
 export function generateTitleSuggestions(
-  fileChanges: Array<{ filename: string; status: string; additions: number; deletions: number }>,
+  fileChanges: Array<{
+    filename: string;
+    status: string;
+    additions: number;
+    deletions: number;
+  }>,
   commitMessages: string[] = [],
 ): TitleSuggestion[] {
   const suggestions: TitleSuggestion[] = [];
 
   // Analyze file changes to suggest appropriate type and scope
-  const hasNewFiles = fileChanges.some(f => f.status === 'added');
-  const hasDocChanges = fileChanges.some(f => f.filename.match(/\.(md|txt|rst)$/i));
-  const hasTestChanges = fileChanges.some(f => f.filename.match(/\.(test|spec)\./i));
-  const hasConfigChanges = fileChanges.some(f => f.filename.match(/\.(json|yml|yaml|toml|ini)$/i));
-  const hasStyleChanges = fileChanges.every(f => f.filename.match(/\.(css|scss|less|styl)$/i));
+  const hasNewFiles = fileChanges.some((f) => f.status === 'added');
+  const hasDocChanges = fileChanges.some((f) =>
+    f.filename.match(/\.(md|txt|rst)$/i),
+  );
+  const hasTestChanges = fileChanges.some((f) =>
+    f.filename.match(/\.(test|spec)\./i),
+  );
+  const hasConfigChanges = fileChanges.some((f) =>
+    f.filename.match(/\.(json|yml|yaml|toml|ini)$/i),
+  );
+  const hasStyleChanges = fileChanges.every((f) =>
+    f.filename.match(/\.(css|scss|less|styl)$/i),
+  );
 
   // Determine likely scope based on file paths
   const scopeMap: Record<string, string[]> = {
-    'api': ['api/', 'server/', 'backend/'],
-    'ui': ['ui/', 'frontend/', 'client/', 'components/'],
-    'auth': ['auth/', 'login/', 'authentication/'],
-    'db': ['db/', 'database/', 'migrations/'],
-    'config': ['config/', '.env', 'settings/'],
-    'test': ['test/', 'tests/', '__tests__/'],
-    'docs': ['docs/', 'documentation/'],
-    'build': ['build/', 'webpack', 'vite', 'rollup'],
-    'ci': ['.github/', 'ci/', 'pipeline/'],
+    api: ['api/', 'server/', 'backend/'],
+    ui: ['ui/', 'frontend/', 'client/', 'components/'],
+    auth: ['auth/', 'login/', 'authentication/'],
+    db: ['db/', 'database/', 'migrations/'],
+    config: ['config/', '.env', 'settings/'],
+    test: ['test/', 'tests/', '__tests__/'],
+    docs: ['docs/', 'documentation/'],
+    build: ['build/', 'webpack', 'vite', 'rollup'],
+    ci: ['.github/', 'ci/', 'pipeline/'],
   };
 
   let detectedScope: string | undefined;
   for (const [scope, patterns] of Object.entries(scopeMap)) {
-    if (fileChanges.some(f => patterns.some(pattern => f.filename.includes(pattern)))) {
+    if (
+      fileChanges.some((f) =>
+        patterns.some((pattern) => f.filename.includes(pattern)),
+      )
+    ) {
       detectedScope = scope;
       break;
     }
@@ -164,7 +186,9 @@ export function generateTitleSuggestions(
       type: 'feat',
       scope: detectedScope,
       description: 'add new functionality',
-      full: `feat${detectedScope ? `(${detectedScope})` : ''}: add new functionality`,
+      full: `feat${
+        detectedScope ? `(${detectedScope})` : ''
+      }: add new functionality`,
     });
   }
 
@@ -173,7 +197,9 @@ export function generateTitleSuggestions(
       type: 'docs',
       scope: detectedScope,
       description: 'update documentation',
-      full: `docs${detectedScope ? `(${detectedScope})` : ''}: update documentation`,
+      full: `docs${
+        detectedScope ? `(${detectedScope})` : ''
+      }: update documentation`,
     });
   }
 
@@ -182,7 +208,9 @@ export function generateTitleSuggestions(
       type: 'test',
       scope: detectedScope,
       description: 'add test coverage',
-      full: `test${detectedScope ? `(${detectedScope})` : ''}: add test coverage`,
+      full: `test${
+        detectedScope ? `(${detectedScope})` : ''
+      }: add test coverage`,
     });
   }
 
@@ -211,7 +239,9 @@ export function generateTitleSuggestions(
         type: 'feat',
         scope: detectedScope,
         description: 'implement new feature',
-        full: `feat${detectedScope ? `(${detectedScope})` : ''}: implement new feature`,
+        full: `feat${
+          detectedScope ? `(${detectedScope})` : ''
+        }: implement new feature`,
       },
       {
         type: 'fix',
@@ -223,7 +253,9 @@ export function generateTitleSuggestions(
         type: 'refactor',
         scope: detectedScope,
         description: 'improve code structure',
-        full: `refactor${detectedScope ? `(${detectedScope})` : ''}: improve code structure`,
+        full: `refactor${
+          detectedScope ? `(${detectedScope})` : ''
+        }: improve code structure`,
       },
     );
   }
@@ -293,7 +325,7 @@ export function inferPRTypeFromCommits(commitMessages: string[]): string {
   const messagesToAnalyze = commitMessages.join(' ').toLowerCase();
 
   for (const [type, keywords] of Object.entries(typeKeywords)) {
-    if (keywords.some(keyword => messagesToAnalyze.includes(keyword))) {
+    if (keywords.some((keyword) => messagesToAnalyze.includes(keyword))) {
       return type;
     }
   }
@@ -311,7 +343,7 @@ export function suggestScopeFromFiles(
 
   for (const file of fileChanges) {
     const path = file.filename;
-    
+
     // Check directory-based scopes
     if (path.includes('src/components/')) scopeSuggestions.add('components');
     if (path.includes('src/services/')) scopeSuggestions.add('services');
@@ -319,13 +351,16 @@ export function suggestScopeFromFiles(
     if (path.includes('src/hooks/')) scopeSuggestions.add('hooks');
     if (path.includes('src/types/')) scopeSuggestions.add('types');
     if (path.includes('src/constants/')) scopeSuggestions.add('constants');
-    
+
     // Check file extension based scopes
-    if (path.endsWith('.test.ts') || path.endsWith('.spec.ts')) scopeSuggestions.add('test');
+    if (path.endsWith('.test.ts') || path.endsWith('.spec.ts'))
+      scopeSuggestions.add('test');
     if (path.endsWith('.md')) scopeSuggestions.add('docs');
-    if (path.endsWith('.css') || path.endsWith('.scss')) scopeSuggestions.add('styles');
+    if (path.endsWith('.css') || path.endsWith('.scss'))
+      scopeSuggestions.add('styles');
     if (path.includes('package.json')) scopeSuggestions.add('deps');
-    if (path.includes('webpack') || path.includes('vite')) scopeSuggestions.add('build');
+    if (path.includes('webpack') || path.includes('vite'))
+      scopeSuggestions.add('build');
     if (path.includes('.github/')) scopeSuggestions.add('ci');
   }
 
@@ -336,14 +371,25 @@ export function suggestScopeFromFiles(
  * Calculate PR complexity score based on changes
  */
 export function calculatePRComplexity(
-  fileChanges: Array<{ filename: string; additions: number; deletions: number }>,
-): { score: number; level: 'simple' | 'moderate' | 'complex'; recommendation: string } {
+  fileChanges: Array<{
+    filename: string;
+    additions: number;
+    deletions: number;
+  }>,
+): {
+  score: number;
+  level: 'simple' | 'moderate' | 'complex';
+  recommendation: string;
+} {
   const totalFiles = fileChanges.length;
-  const totalLines = fileChanges.reduce((sum, f) => sum + f.additions + f.deletions, 0);
+  const totalLines = fileChanges.reduce(
+    (sum, f) => sum + f.additions + f.deletions,
+    0,
+  );
   const avgLinesPerFile = totalLines / totalFiles;
 
   let score = 0;
-  
+
   // File count impact
   if (totalFiles <= 3) score += 1;
   else if (totalFiles <= 10) score += 2;
@@ -355,7 +401,9 @@ export function calculatePRComplexity(
   else score += 3;
 
   // File diversity impact
-  const extensions = new Set(fileChanges.map(f => f.filename.split('.').pop()));
+  const extensions = new Set(
+    fileChanges.map((f) => f.filename.split('.').pop()),
+  );
   if (extensions.size > 3) score += 1;
 
   let level: 'simple' | 'moderate' | 'complex';
@@ -366,10 +414,12 @@ export function calculatePRComplexity(
     recommendation = 'This PR is appropriately sized for easy review.';
   } else if (score <= 5) {
     level = 'moderate';
-    recommendation = 'This PR is moderately complex. Consider detailed testing notes.';
+    recommendation =
+      'This PR is moderately complex. Consider detailed testing notes.';
   } else {
     level = 'complex';
-    recommendation = 'This PR is complex. Consider breaking it into smaller, focused PRs.';
+    recommendation =
+      'This PR is complex. Consider breaking it into smaller, focused PRs.';
   }
 
   return { score, level, recommendation };

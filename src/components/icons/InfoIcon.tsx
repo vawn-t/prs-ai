@@ -1,9 +1,9 @@
 import { IconProps } from '@types';
 
-export const InfoIcon = ({ 
-  size = 16, 
+export const InfoIcon = ({
+  size = 16,
   className = '',
-  ...props 
+  ...props
 }: IconProps) => (
   <svg
     width={size}

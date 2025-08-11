@@ -5,20 +5,20 @@ export const DEFAULT_GENERATION_RULES: PRGenerationRules = {
   // Content inclusion preferences
   includeFileChanges: true,
   includeCommitMessages: true,
-  
+
   // Title generation settings
   titleFormat: 'conventional', // Use conventional commits format by default
   customTitleTemplate: undefined, // No custom template by default
-  
+
   // Description settings
   maxDescriptionLength: 2000, // Professional length for readability
-  
+
   // Description sections (comprehensive structure)
   descriptionSections: {
-    summary: true,     // ## Description - Clear explanation of what and why
-    changes: true,     // ## Changes Made - Specific bullet points
-    testing: true,     // ## Testing - How changes were verified
-    breaking: true,    // ## Breaking Changes - Critical compatibility notes
+    summary: true, // ## Description - Clear explanation of what and why
+    changes: true, // ## Changes Made - Specific bullet points
+    testing: true, // ## Testing - How changes were verified
+    breaking: true, // ## Breaking Changes - Critical compatibility notes
   },
 };
 

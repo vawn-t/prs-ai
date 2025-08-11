@@ -41,7 +41,10 @@ export const Button = ({
       )}
     >
       {loading && (
-        <SpinnerIcon size={16} className='animate-spin -ml-1 mr-2 h-4 w-4 text-current' />
+        <SpinnerIcon
+          size={16}
+          className='animate-spin -ml-1 mr-2 h-4 w-4 text-current'
+        />
       )}
       {children}
     </button>

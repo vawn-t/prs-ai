@@ -1,10 +1,6 @@
 import { IconProps } from '@types';
 
-export const XIcon = ({ 
-  size = 16, 
-  className = '',
-  ...props 
-}: IconProps) => (
+export const XIcon = ({ size = 16, className = '', ...props }: IconProps) => (
   <svg
     width={size}
     height={size}

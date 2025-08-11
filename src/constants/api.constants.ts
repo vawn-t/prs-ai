@@ -43,7 +43,8 @@ export const PR_TITLE_TYPE_DESCRIPTIONS = {
   [PR_TITLE_TYPES.FEAT]: 'New feature or functionality',
   [PR_TITLE_TYPES.FIX]: 'Bug fix',
   [PR_TITLE_TYPES.DOCS]: 'Documentation changes',
-  [PR_TITLE_TYPES.STYLE]: 'Code style changes (formatting, no functional change)',
+  [PR_TITLE_TYPES.STYLE]:
+    'Code style changes (formatting, no functional change)',
   [PR_TITLE_TYPES.REFACTOR]: 'Code refactoring without changing functionality',
   [PR_TITLE_TYPES.TEST]: 'Adding or updating tests',
   [PR_TITLE_TYPES.CHORE]: 'Maintenance tasks (e.g., updating dependencies)',

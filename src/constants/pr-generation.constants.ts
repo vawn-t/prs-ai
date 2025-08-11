@@ -10,20 +10,20 @@ export const ENHANCED_DEFAULT_GENERATION_RULES: PRGenerationRules = {
   // Content inclusion - what to analyze from the codebase
   includeFileChanges: true,
   includeCommitMessages: true,
-  
+
   // Title generation - following conventional commits
   titleFormat: 'conventional',
   customTitleTemplate: undefined,
-  
+
   // Description constraints for readability
   maxDescriptionLength: 2000, // Sweet spot for comprehensive yet readable PRs
-  
+
   // Professional PR structure sections
   descriptionSections: {
-    summary: true,     // Essential: What and why
-    changes: true,     // Essential: Specific modifications
-    testing: true,     // Essential: Verification methods
-    breaking: true,    // Critical: Compatibility impact
+    summary: true, // Essential: What and why
+    changes: true, // Essential: Specific modifications
+    testing: true, // Essential: Verification methods
+    breaking: true, // Critical: Compatibility impact
   },
 };
 
@@ -34,7 +34,8 @@ export const TITLE_TEMPLATES = {
     example: 'feat(auth): add OAuth2 login support',
     maxLength: 72,
     recommendedLength: 50,
-    description: 'Conventional Commits format with type, optional scope, and imperative description',
+    description:
+      'Conventional Commits format with type, optional scope, and imperative description',
   },
   descriptive: {
     format: '[Clear action statement]',
@@ -136,43 +137,50 @@ export const DESCRIPTION_SECTIONS = {
     title: 'Description',
     required: true,
     description: 'Clear explanation of what the PR does and why',
-    template: '[Provide a clear and concise explanation of what the PR does and why it\'s needed.]',
+    template:
+      "[Provide a clear and concise explanation of what the PR does and why it's needed.]",
   },
   changes: {
     title: 'Changes Made',
     required: true,
     description: 'Specific modifications and tasks completed',
-    template: '- [List specific changes or tasks completed, using bullet points.]\n- [Focus on key modifications, e.g., "Added X feature to Y module."]',
+    template:
+      '- [List specific changes or tasks completed, using bullet points.]\n- [Focus on key modifications, e.g., "Added X feature to Y module."]',
   },
   relatedIssues: {
     title: 'Related Issues',
     required: false,
     description: 'Links to relevant issues or tickets',
-    template: '- [Link to relevant issue(s) or ticket(s), e.g., "Closes #123" or "Fixes #456".]',
+    template:
+      '- [Link to relevant issue(s) or ticket(s), e.g., "Closes #123" or "Fixes #456".]',
   },
   testing: {
     title: 'Testing',
     required: true,
     description: 'How the changes were verified',
-    template: '- [Describe how the changes were tested, e.g., unit tests, manual testing, or CI.]\n- [Mention any specific test cases or scenarios covered.]',
+    template:
+      '- [Describe how the changes were tested, e.g., unit tests, manual testing, or CI.]\n- [Mention any specific test cases or scenarios covered.]',
   },
   breaking: {
     title: 'Breaking Changes',
     required: false,
     description: 'Any breaking changes that affect compatibility',
-    template: '- [List any breaking changes that affect existing functionality]\n- [Include migration instructions if applicable]',
+    template:
+      '- [List any breaking changes that affect existing functionality]\n- [Include migration instructions if applicable]',
   },
   screenshots: {
     title: 'Screenshots',
     required: false,
     description: 'Visual evidence for UI/UX changes',
-    template: '- [Include screenshots or GIFs for UI changes to provide visual context.]',
+    template:
+      '- [Include screenshots or GIFs for UI changes to provide visual context.]',
   },
   additionalNotes: {
     title: 'Additional Notes',
     required: false,
     description: 'Extra information, limitations, or follow-up tasks',
-    template: '- [Add any extra information, such as known limitations, follow-up tasks, or reviewer instructions.]',
+    template:
+      '- [Add any extra information, such as known limitations, follow-up tasks, or reviewer instructions.]',
   },
 } as const;
 
@@ -183,7 +191,8 @@ export const VALIDATION_RULES = {
     maxLength: 72,
     recommendedMaxLength: 50,
     patterns: {
-      conventional: /^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,}$/,
+      conventional:
+        /^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,}$/,
       noUppercaseStart: /^[a-z]/,
       noTrailingPeriod: /[^.]$/,
     },
@@ -200,13 +209,14 @@ export const CONVENTIONAL_TYPES = {
   feat: 'A new feature',
   fix: 'A bug fix',
   docs: 'Documentation only changes',
-  style: 'Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)',
+  style:
+    'Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)',
   refactor: 'A code change that neither fixes a bug nor adds a feature',
   perf: 'A code change that improves performance',
   test: 'Adding missing tests or correcting existing tests',
   build: 'Changes that affect the build system or external dependencies',
   ci: 'Changes to our CI configuration files and scripts',
-  chore: 'Other changes that don\'t modify src or test files',
+  chore: "Other changes that don't modify src or test files",
   revert: 'Reverts a previous commit',
 } as const;
 
@@ -260,7 +270,8 @@ export const VALIDATION_MESSAGES = {
     tooShort: `Title must be at least ${VALIDATION_RULES.title.minLength} characters`,
     tooLong: `Title should not exceed ${VALIDATION_RULES.title.maxLength} characters`,
     recommendedLength: `Consider keeping title under ${VALIDATION_RULES.title.recommendedMaxLength} characters for better readability`,
-    invalidConventional: 'Title should follow conventional commit format: type(scope): description',
+    invalidConventional:
+      'Title should follow conventional commit format: type(scope): description',
     shouldStartLowercase: 'Title should start with lowercase letter',
     noTrailingPeriod: 'Title should not end with a period',
   },

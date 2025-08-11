@@ -93,8 +93,14 @@ export class AIService {
 **CODEBASE ANALYSIS:**
 - Repository: ${prData.baseBranch} ← ${prData.headBranch}
 - Files changed: ${prData.changes.length}
-- Total additions: ${prData.changes.reduce((sum, change) => sum + change.additions, 0)}
-- Total deletions: ${prData.changes.reduce((sum, change) => sum + change.deletions, 0)}
+- Total additions: ${prData.changes.reduce(
+      (sum, change) => sum + change.additions,
+      0,
+    )}
+- Total deletions: ${prData.changes.reduce(
+      (sum, change) => sum + change.deletions,
+      0,
+    )}
 
 **FILE CHANGES DETAILS:**
 ${prData.changes
@@ -165,12 +171,24 @@ ${
 ## Description
 [Clear explanation of what the PR does and why it's needed - provide business/technical context]
 
-${rules.descriptionSections.changes ? '## Changes Made\n- [Specific modifications using bullet points]\n- [Focus on key changes, e.g., "Added X feature to Y module"]\n' : ''}
+${
+  rules.descriptionSections.changes
+    ? '## Changes Made\n- [Specific modifications using bullet points]\n- [Focus on key changes, e.g., "Added X feature to Y module"]\n'
+    : ''
+}
 ## Related Issues
 - [Link relevant issues: "Closes #123", "Fixes #456", or "N/A" if none]
 
-${rules.descriptionSections.testing ? '## Testing\n- [Describe verification methods: unit tests, manual testing, CI/CD]\n- [Mention specific test cases or scenarios covered]\n' : ''}
-${rules.descriptionSections.breaking ? '## Breaking Changes\n- [List any breaking changes affecting existing functionality]\n- [Include migration instructions if applicable, or "None" if no breaking changes]\n' : ''}
+${
+  rules.descriptionSections.testing
+    ? '## Testing\n- [Describe verification methods: unit tests, manual testing, CI/CD]\n- [Mention specific test cases or scenarios covered]\n'
+    : ''
+}
+${
+  rules.descriptionSections.breaking
+    ? '## Breaking Changes\n- [List any breaking changes affecting existing functionality]\n- [Include migration instructions if applicable, or "None" if no breaking changes]\n'
+    : ''
+}
 ## Additional Notes
 - [Any limitations, follow-up tasks, or reviewer instructions, or "None"]
 

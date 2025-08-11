@@ -1,9 +1,9 @@
 import { IconProps } from '@types';
 
-export const SpinnerIcon = ({ 
-  size = 16, 
+export const SpinnerIcon = ({
+  size = 16,
   className = 'animate-spin text-current',
-  ...props 
+  ...props
 }: IconProps) => (
   <svg
     width={size}

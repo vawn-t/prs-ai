@@ -5,12 +5,14 @@ This folder contains reusable SVG icon components for the PRs-AI Chrome extensio
 ## Available Icons
 
 ### 🔵 Status & UI Icons
+
 - **CheckIcon** - Success/completion indicator
-- **XIcon** - Error/close indicator  
+- **XIcon** - Error/close indicator
 - **ExclamationIcon** - Warning indicator
 - **InfoIcon** - Information indicator
 
 ### 🔄 Action Icons
+
 - **SpinnerIcon** - Loading/progress indicator (animated)
 - **LoadingIcon** - Alternative loading spinner
 - **RefreshIcon** - Regenerate/reload action
@@ -20,6 +22,7 @@ This folder contains reusable SVG icon components for the PRs-AI Chrome extensio
 ## Usage
 
 ### In React Components
+
 ```tsx
 import { CheckIcon, SpinnerIcon, SettingsIcon } from '@components/icons';
 
@@ -34,6 +37,7 @@ import { CheckIcon, SpinnerIcon, SettingsIcon } from '@components/icons';
 ```
 
 ### In Content Scripts (vanilla JS/DOM)
+
 ```typescript
 import { createIconElement } from '@utils';
 
@@ -50,21 +54,23 @@ All icon components use the shared `IconProps` interface:
 
 ```typescript
 interface IconProps {
-  size?: number;        // Icon size in pixels (default: 16)
-  className?: string;   // Additional CSS classes
-  [key: string]: any;   // Any additional SVG attributes
+  size?: number; // Icon size in pixels (default: 16)
+  className?: string; // Additional CSS classes
+  [key: string]: any; // Any additional SVG attributes
 }
 ```
 
 ## Icon Categories
 
 ### Status Icons
+
 - `CheckIcon` - ✅ Success states, completed actions
-- `XIcon` - ❌ Error states, close/cancel actions  
+- `XIcon` - ❌ Error states, close/cancel actions
 - `ExclamationIcon` - ⚠️ Warning states, important notices
 - `InfoIcon` - ℹ️ Information states, help content
 
 ### Action Icons
+
 - `StarIcon` - ⭐ Primary actions, favorites, generate
 - `RefreshIcon` - 🔄 Refresh, regenerate, retry actions
 - `SettingsIcon` - ⚙️ Configuration, preferences, options
@@ -74,16 +80,19 @@ interface IconProps {
 ## Design Guidelines
 
 ### Size Standards
+
 - **Small**: 12-14px (compact UI elements)
-- **Medium**: 16px (default, most common)  
+- **Medium**: 16px (default, most common)
 - **Large**: 20-24px (prominent actions)
 
 ### Accessibility
+
 - All icons include `aria-hidden="true"` by default
 - Use alongside descriptive text for screen readers
 - Ensure sufficient color contrast (4.5:1 minimum)
 
 ### Styling
+
 - Icons inherit text color via `fill="currentColor"`
 - Use CSS classes for custom colors and animations
 - Maintain consistent visual weight across icon set
@@ -94,7 +103,7 @@ interface IconProps {
 src/components/icons/
 ├── index.ts              # Export all icons
 ├── CheckIcon.tsx         # Success/check icon
-├── XIcon.tsx            # Error/close icon  
+├── XIcon.tsx            # Error/close icon
 ├── ExclamationIcon.tsx   # Warning icon
 ├── InfoIcon.tsx         # Information icon
 ├── SpinnerIcon.tsx      # Animated loading spinner
@@ -116,13 +125,15 @@ When replacing inline SVGs with icon components:
 5. **Remove the old SVG code**
 
 ### Before (inline SVG):
+
 ```tsx
-<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-  <path d="M12 2l3.09 6.26L22 9.27..."/>
+<svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+  <path d='M12 2l3.09 6.26L22 9.27...' />
 </svg>
 ```
 
 ### After (icon component):
+
 ```tsx
 <StarIcon size={16} />
 ```
@@ -137,24 +148,21 @@ When replacing inline SVGs with icon components:
 6. **Update this documentation**
 
 ### Template:
+
 ```tsx
 import { IconProps } from '@types';
 
-export const NewIcon = ({ 
-  size = 16, 
-  className = '',
-  ...props 
-}: IconProps) => (
+export const NewIcon = ({ size = 16, className = '', ...props }: IconProps) => (
   <svg
     width={size}
     height={size}
-    viewBox="0 0 24 24"
-    fill="currentColor"
+    viewBox='0 0 24 24'
+    fill='currentColor'
     className={className}
-    aria-hidden="true"
+    aria-hidden='true'
     {...props}
   >
-    <path d="..." />
+    <path d='...' />
   </svg>
 );
 ```
