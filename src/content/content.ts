@@ -491,7 +491,7 @@ class GitHubPRGenerator {
 	} {
 		const existingContent = descriptionTextarea.value.trim();
 
-		if (existingContent && existingContent.length > 10) {
+		if (existingContent && existingContent.length > 0) {
 			return { description: existingContent };
 		}
 

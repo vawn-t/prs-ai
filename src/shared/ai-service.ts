@@ -87,151 +87,175 @@ export class AIService {
     rules: PRGenerationRules,
     existingTemplate?: { title?: string; description?: string },
   ): string {
-    // Build comprehensive prompt based on professional PR guide
-    let prompt = `You are an expert software engineer creating a professional GitHub Pull Request. Generate a high-quality PR title and description following industry best practices.
+    const hasRepoTemplate = !!existingTemplate?.description?.trim();
+    const lines: string[] = [];
 
-**CODEBASE ANALYSIS:**
-- Repository: ${prData.baseBranch} ← ${prData.headBranch}
-- Files changed: ${prData.changes.length}
-- Total additions: ${prData.changes.reduce(
-      (sum, change) => sum + change.additions,
-      0,
-    )}
-- Total deletions: ${prData.changes.reduce(
-      (sum, change) => sum + change.deletions,
-      0,
-    )}
+    lines.push(
+      'You are an expert software engineer creating a professional GitHub Pull Request. Generate a high-quality PR title and description, following this precedence: use the repository PR template if present; otherwise use the extension rules.',
+    );
+    lines.push('');
 
-**FILE CHANGES DETAILS:**
-${prData.changes
-  .map(
-    (change) =>
-      `- ${change.filename} (${change.status}): +${change.additions} -${change.deletions}`,
-  )
-  .join('\n')}
+    // Analysis
+    lines.push('**CODEBASE ANALYSIS:**');
+    lines.push(`- Repository: ${prData.baseBranch} ← ${prData.headBranch}`);
+    lines.push(`- Files changed: ${prData.changes.length}`);
+    lines.push(
+      `- Total additions: ${prData.changes.reduce(
+        (sum, c) => sum + c.additions,
+        0,
+      )}`,
+    );
+    lines.push(
+      `- Total deletions: ${prData.changes.reduce(
+        (sum, c) => sum + c.deletions,
+        0,
+      )}`,
+    );
+    lines.push('');
 
-${
-  rules.includeCommitMessages && prData.commitMessages.length > 0
-    ? `
-**COMMIT HISTORY:**
-${prData.commitMessages.map((msg) => `- ${msg}`).join('\n')}
-`
-    : ''
-}
+    lines.push('**FILE CHANGES DETAILS:**');
+    prData.changes.forEach((change) => {
+      lines.push(
+        `- ${change.filename} (${change.status}): +${change.additions} -${change.deletions}`,
+      );
+    });
 
-**TITLE REQUIREMENTS:**
-- Format: ${
-      rules.titleFormat === 'conventional'
-        ? 'Conventional Commits format: type(scope): description'
-        : rules.titleFormat === 'descriptive'
-        ? 'Clear, descriptive action statement'
-        : rules.customTitleTemplate
-        ? `Custom format: ${rules.customTitleTemplate}`
-        : 'Professional descriptive format'
+    if (rules.includeCommitMessages && prData.commitMessages.length > 0) {
+      lines.push('');
+      lines.push('**COMMIT HISTORY:**');
+      prData.commitMessages.forEach((msg) => lines.push(`- ${msg}`));
     }
-- Length: Maximum 72 characters, ideally under 50
-- Style: Use imperative mood (e.g., "Add feature" not "Added feature")
-- Avoid: Vague terms like "update" or "improve" without context
 
-${
-  rules.titleFormat === 'conventional'
-    ? `
-**CONVENTIONAL COMMIT TYPES:**
-- feat: New feature or functionality
-- fix: Bug fix  
-- docs: Documentation changes
-- style: Code style/formatting (no functional change)
-- refactor: Code refactoring without changing functionality
-- test: Adding or updating tests
-- chore: Maintenance tasks (dependencies, config)
-- perf: Performance improvements
-- ci: CI/CD pipeline changes
-- build: Build system changes
-`
-    : ''
-}
+    // Title requirements
+    lines.push('');
+    lines.push('**TITLE REQUIREMENTS:**');
+    lines.push(
+      `- Format: ${
+        rules.titleFormat === 'conventional'
+          ? 'Conventional Commits format: type(scope): description'
+          : rules.titleFormat === 'descriptive'
+          ? 'Clear, descriptive action statement'
+          : rules.customTitleTemplate
+          ? `Custom format: ${rules.customTitleTemplate}`
+          : 'Professional descriptive format'
+      }`,
+    );
+    lines.push(
+      '- Length: Maximum 72 characters, ideally under 50',
+      '- Style: Use imperative mood (e.g., "Add feature" not "Added feature")',
+      '- Avoid: Vague terms like "update" or "improve" without context',
+    );
 
-**DESCRIPTION REQUIREMENTS:**
-- Max length: ${rules.maxDescriptionLength} characters
-- Format: Professional markdown structure
-${
-  rules.customDescriptionTemplate?.trim()
-    ? `- Use the custom template provided below
-- Customize the template content based on actual code changes
-- Keep the overall structure but replace placeholders with specific details`
-    : `- Include sections: ${Object.entries(rules.descriptionSections)
-        .filter(([_, enabled]) => enabled)
-        .map(([section, _]) => {
-          const sectionMap: Record<string, string> = {
-            summary: 'Description (what and why)',
-            changes: 'Changes Made (specific bullet points)',
-            testing: 'Testing (verification methods)',
-            breaking: 'Breaking Changes (if any)',
-          };
-          return sectionMap[section] || section;
-        })
-        .join(', ')}`
-}
-
-${
-  rules.customDescriptionTemplate?.trim()
-    ? `**CUSTOM DESCRIPTION TEMPLATE:**
-${rules.customDescriptionTemplate}
-
-Use this template as the base structure, but customize the content based on the actual code changes. Replace any placeholder text with specific details from the file changes and commit messages.`
-    : `**DESCRIPTION STRUCTURE TEMPLATE:**
-## Description
-[Clear explanation of what the PR does and why it's needed - provide business/technical context]
-
-${
-      rules.descriptionSections.changes
-        ? '## Changes Made\n- [Specific modifications using bullet points]\n- [Focus on key changes, e.g., "Added X feature to Y module"]\n'
-        : ''
+    if (rules.titleFormat === 'conventional') {
+      lines.push('');
+      lines.push('**CONVENTIONAL COMMIT TYPES:**');
+      lines.push(
+        '- feat: New feature or functionality',
+        '- fix: Bug fix',
+        '- docs: Documentation changes',
+        '- style: Code style/formatting (no functional change)',
+        '- refactor: Code refactoring without changing functionality',
+        '- test: Adding or updating tests',
+        '- chore: Maintenance tasks (dependencies, config)',
+        '- perf: Performance improvements',
+        '- ci: CI/CD pipeline changes',
+        '- build: Build system changes',
+      );
     }
-## Related Issues
-- [Link relevant issues: "Closes #123", "Fixes #456", or "N/A" if none]
 
-${
-      rules.descriptionSections.testing
-        ? '## Testing\n- [Describe verification methods: unit tests, manual testing, CI/CD]\n- [Mention specific test cases or scenarios covered]\n'
-        : ''
+    // Description rules
+    lines.push('');
+    if (hasRepoTemplate) {
+      lines.push('**DESCRIPTION TEMPLATE (REPOSITORY-SUPPLIED):**');
+      lines.push(
+        'Use the following PR template as the ONLY structure. Preserve section order, headings, checklists, and comments. Replace placeholders with concrete details based on file changes and commit messages.',
+      );
+      lines.push('TEMPLATE:');
+      lines.push(existingTemplate!.description || '');
+    } else {
+      lines.push('**DESCRIPTION REQUIREMENTS:**');
+      lines.push(
+        `- Max length: ${rules.maxDescriptionLength} characters`,
+        '- Format: Professional markdown structure',
+      );
+
+      if (rules.customDescriptionTemplate?.trim()) {
+        lines.push(
+          '- Use the custom template provided below',
+          '- Customize the template content based on actual code changes',
+          '- Keep the overall structure but replace placeholders with specific details',
+        );
+        lines.push('');
+        lines.push('**CUSTOM DESCRIPTION TEMPLATE:**');
+        lines.push(rules.customDescriptionTemplate);
+        lines.push(
+          'Use this template as the base structure, but customize the content based on the actual code changes.',
+        );
+      } else {
+        const enabledSections = Object.entries(rules.descriptionSections)
+          .filter(([, enabled]) => enabled)
+          .map(([section]) => {
+            const sectionMap: Record<string, string> = {
+              summary: 'Description (what and why)',
+              changes: 'Changes Made (specific bullet points)',
+              testing: 'Testing (verification methods)',
+              breaking: 'Breaking Changes (if any)',
+            };
+            return sectionMap[section] || section;
+          })
+          .join(', ');
+
+        lines.push(`- Include sections: ${enabledSections}`);
+        lines.push('');
+        lines.push('**DESCRIPTION STRUCTURE TEMPLATE:**');
+        lines.push('## Description');
+        lines.push(
+          "[Clear explanation of what the PR does and why it's needed - provide business/technical context]",
+        );
+        if (rules.descriptionSections.changes) {
+          lines.push('## Changes Made');
+          lines.push('- [Specific modifications using bullet points]');
+          lines.push(
+            '- [Focus on key changes, e.g., "Added X feature to Y module"]',
+          );
+        }
+        lines.push('## Related Issues');
+        lines.push('- [Link relevant issues or N/A]');
+        if (rules.descriptionSections.testing) {
+          lines.push('## Testing');
+          lines.push(
+            '- [Describe verification methods: unit tests, manual testing, CI/CD]',
+          );
+          lines.push('- [Mention specific test cases or scenarios covered]');
+        }
+        if (rules.descriptionSections.breaking) {
+          lines.push('## Breaking Changes');
+          lines.push('- [List any breaking changes or "None"]');
+          lines.push('- [Include migration instructions if applicable]');
+        }
+        lines.push('## Additional Notes');
+        lines.push('- [Any limitations, follow-ups, or "None"]');
+      }
     }
-${
-      rules.descriptionSections.breaking
-        ? '## Breaking Changes\n- [List any breaking changes affecting existing functionality]\n- [Include migration instructions if applicable, or "None" if no breaking changes]\n'
-        : ''
-    }
-## Additional Notes
-- [Any limitations, follow-up tasks, or reviewer instructions, or "None"]`
-}
-${
-  rules.descriptionSections.breaking
-    ? '## Breaking Changes\n- [List any breaking changes affecting existing functionality]\n- [Include migration instructions if applicable, or "None" if no breaking changes]\n'
-    : ''
-}
-## Additional Notes
-- [Any limitations, follow-up tasks, or reviewer instructions, or "None"]
 
-${
-  existingTemplate?.description
-    ? `
-**EXISTING PR TEMPLATE (follow this structure if provided):**
-${existingTemplate.description}
-`
-    : ''
-}
+    lines.push('');
+    lines.push('**OUTPUT REQUIREMENTS:**');
+    lines.push(
+      '- Return ONLY a valid JSON object with "title" and "description" fields',
+    );
+    lines.push('- Title: Professional, concise, follows specified format');
+    lines.push(
+      '- Description: Well-structured markdown following the template above',
+    );
+    lines.push('- Ensure all specified sections are included');
+    lines.push('- Make content specific to the actual changes shown');
+    lines.push('- Use professional tone suitable for code review');
+    lines.push('');
+    lines.push(
+      'Analyze the code changes carefully and generate appropriate content that reflects the actual modifications made.',
+    );
 
-**OUTPUT REQUIREMENTS:**
-- Return ONLY a valid JSON object with "title" and "description" fields
-- Title: Professional, concise, follows specified format
-- Description: Well-structured markdown following the template above
-- Ensure all specified sections are included
-- Make content specific to the actual changes shown in the file list
-- Use professional tone suitable for code review
-
-Analyze the code changes carefully and generate appropriate content that reflects the actual modifications made.`;
-
-    return prompt;
+    return lines.join('\n');
   }
 
   private static async callOpenAI(
