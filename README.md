@@ -1,15 +1,20 @@
 # PRs-AI 🤖
 
-An AI-powered Chrome extension that generates professional Pull Request descriptions and titles based on your code changes. Supports both OpenAI (ChatGPT) and Google Gemini APIs.
+An AI-powered Chrome extension that generates professional Pull Request descriptions and titles based on your code changes. **Now supports both GitHub and GitLab!** Works with OpenAI (ChatGPT) and Google Gemini APIs.
 
 ## Features
 
-🚀 **Smart PR Generation**: Automatically generates PR titles and descriptions based on:
+🚀 **Smart PR/MR Generation**: Automatically generates PR titles and descriptions based on:
 
 - File changes and diff statistics
 - Commit messages
-- Existing PR templates
+- Existing PR/MR templates
 - Configurable rules and preferences
+
+🌍 **Multi-Platform Support**:
+
+- **GitHub**: Pull Requests (PRs)
+- **GitLab**: Merge Requests (MRs)
 
 🔑 **Multiple AI Providers**:
 
@@ -23,7 +28,7 @@ An AI-powered Chrome extension that generates professional Pull Request descript
 - Content length limits
 - Template integration
 
-🎨 **Clean UI**: Modern, GitHub-integrated interface that feels native to the platform
+🎨 **Clean UI**: Modern, GitHub/GitLab-integrated interface that feels native to each platform
 
 ## Installation
 
@@ -92,14 +97,21 @@ This creates `prs-ai-extension.zip` in the project root.
 
 ## Usage
 
-1. **Navigate to a GitHub PR creation page**:
+1. **Navigate to a PR/MR creation page**:
+
+   **GitHub:**
 
    - Creating a new PR from a branch comparison
    - Opening an existing PR for editing
 
+   **GitLab:**
+
+   - Creating a new Merge Request
+   - Editing an existing Merge Request
+
 2. **Generate content**:
 
-   - Click the "Generate with AI" button near the PR description
+   - Click the "Generate with AI" button near the PR/MR description
    - The extension will analyze code changes and generate appropriate content
    - Review and modify the generated title and description as needed
 
@@ -114,9 +126,11 @@ This creates `prs-ai-extension.zip` in the project root.
 ```
 src/
 ├── background/     # Service worker
-├── content/        # GitHub page integration
+├── content/        # GitHub/GitLab page integration
 ├── popup/          # Extension popup UI
 ├── options/        # Settings page
+├── constants/      # Platform-specific configurations
+├── utils/          # Platform detection and data extraction
 └── shared/         # Common utilities and types
 ```
 
@@ -152,12 +166,21 @@ npm run package
 - Configurable models for each provider
 - Error handling and user feedback
 
-### GitHub Integration
+### Platform Integration
+
+**GitHub:**
 
 - Detects PR creation and edit pages
 - Extracts file changes, commit messages, and existing templates
 - Preserves existing PR template structure
 - Non-intrusive UI that matches GitHub's design
+
+**GitLab:**
+
+- Detects Merge Request creation and edit pages
+- Extracts file changes, commit messages, and existing templates
+- Integrates seamlessly with GitLab's interface
+- Supports both GitLab.com and self-hosted instances
 
 ### Customization Options
 
