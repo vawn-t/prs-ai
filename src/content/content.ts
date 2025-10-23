@@ -1,182 +1,123 @@
 import { AIService } from '@shared/ai-service';
 import { StorageService } from '@shared/storage';
 import {
-	PRData,
-	CodeChange,
-	ApiConfig,
-	PRGenerationRules
+  PRData,
+  CodeChange,
+  ApiConfig,
+  PRGenerationRules,
 } from '@shared/types';
-import { createIconElement } from '@utils';
+import {
+  createIconElement,
+  PlatformDetector,
+  GitHubExtractor,
+  GitLabExtractor,
+} from '@utils';
 
-class GitHubPRGenerator {
-	private isInitialized = false;
-	private generateButton: HTMLElement | null = null;
-	private apiConfig: ApiConfig | null = null;
-	private generationRules: PRGenerationRules | null = null;
+class UniversalPRGenerator {
+  private isInitialized = false;
+  private generateButton: HTMLElement | null = null;
+  private apiConfig: ApiConfig | null = null;
+  private generationRules: PRGenerationRules | null = null;
+  public platform = PlatformDetector.detectPlatform();
+  public config = PlatformDetector.getPlatformConfig(this.platform);
+  public extractor =
+    this.platform === 'github' ? new GitHubExtractor() : new GitLabExtractor();
 
-	async init() {
-		console.log('PRs-AI: Initializing...', {
-			isInitialized: this.isInitialized,
-			readyState: document.readyState,
-			url: window.location.href
-		});
+  async init() {
+    if (this.isInitialized) return;
 
-		if (this.isInitialized) return;
+    // Wait for page to load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.init());
+      return;
+    }
 
-		// Wait for page to load
-		if (document.readyState === 'loading') {
-			console.log('PRs-AI: Waiting for DOMContentLoaded...');
-			document.addEventListener('DOMContentLoaded', () => this.init());
-			return;
-		}
+    // Check if we're on a PR creation or edit page
+    const isPRPage = this.isPRPage();
 
-		// Check if we're on a PR creation or edit page
-		if (!this.isPRPage()) {
-			console.log('PRs-AI: Not a PR page, skipping initialization');
-			return;
-		}
+    if (!isPRPage) {
+      return;
+    }
 
-		// Inject UI as soon as possible to show the button immediately,
-		// then load config in the background and update state.
-		console.log('PRs-AI: Injecting UI...');
-		await this.injectUI();
+    // Inject UI as soon as possible to show the button immediately,
+    // then load config in the background and update state.
+    await this.injectUI();
+    this.loadConfig().then(() => this.updateGenerateButtonState());
 
-		console.log('PRs-AI: Loading config in background...');
-		this.loadConfig().then(() => this.updateGenerateButtonState());
+    this.isInitialized = true;
+  }
 
-		this.isInitialized = true;
-		console.log('PRs-AI: Initialization complete');
-	}
+  private isPRPage(): boolean {
+    return PlatformDetector.isPRPage(this.platform);
+  }
 
-	private isPRPage(): boolean {
-		const url = window.location.href;
-		const pathname = window.location.pathname;
+  private async loadConfig() {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'getStorageData',
+        keys: ['apiConfig', 'generationRules'],
+      });
 
-		// More comprehensive GitHub PR page detection
-		const isPRPage =
-			url.includes('/compare/') ||
-			url.includes('/pull/new') ||
-			pathname.includes('/pull/new') ||
-			(url.includes('/pull/') && url.includes('/edit')) ||
-			(pathname.includes('/pull/') && pathname.includes('/edit')) ||
-			// Also handle GitHub's new PR creation flow
-			pathname.endsWith('/compare') ||
-			!!pathname.match(/\/pull\/\d+$/); // PR view page
+      if (response && response.success) {
+        this.apiConfig = response.data.apiConfig;
+        this.generationRules = response.data.generationRules;
+      } else {
+        console.error(
+          'PRs-AI: Failed to load config - invalid response:',
+          response,
+        );
+        this.apiConfig = null;
+        this.generationRules = null;
+      }
+    } catch (error) {
+      console.error('PRs-AI: Failed to load config:', error);
+      this.apiConfig = null;
+      this.generationRules = null;
+    }
+  }
 
-		console.log('PRs-AI: isPRPage check:', { url, pathname, isPRPage });
-		return isPRPage;
-	}
+  private async injectUI() {
+    console.log('PRs-AI: Attempting to inject UI...');
+    // Wait for the PR form elements to appear as GitHub lazily renders parts of the page
+    const { titleInput, descriptionTextarea } = await this.waitForPRElements();
+    if (!titleInput || !descriptionTextarea) {
+      console.warn('PRs-AI: PR form elements not found after waiting.');
+      return;
+    }
 
-	private async loadConfig() {
-		try {
-			console.log('PRs-AI: Requesting config from background...');
-			const response = await chrome.runtime.sendMessage({
-				action: 'getStorageData',
-				keys: ['apiConfig', 'generationRules']
-			});
+    console.log('PRs-AI: Creating generate button...');
+    // Create and inject the generate button
+    this.createGenerateButton(titleInput, descriptionTextarea);
+  }
 
-			console.log('PRs-AI: Received response from background:', response);
+  private waitForPRElements(): Promise<{
+    titleInput: HTMLInputElement | null;
+    descriptionTextarea: HTMLTextAreaElement | null;
+  }> {
+    return this.extractor.waitForElements();
+  }
 
-			if (response && response.success) {
-				this.apiConfig = response.data.apiConfig;
-				this.generationRules = response.data.generationRules;
+  private createGenerateButton(
+    titleInput: HTMLInputElement,
+    descriptionTextarea: HTMLTextAreaElement,
+  ) {
+    console.log('PRs-AI: Creating generate button...', {
+      platform: this.platform,
+    });
 
-				console.log('PRs-AI: Loaded config:', {
-					apiConfig: this.apiConfig,
-					generationRules: this.generationRules,
-					hasOpenaiKey: !!this.apiConfig?.openai?.key,
-					hasGeminiKey: !!this.apiConfig?.gemini?.key
-				});
-			} else {
-				console.error(
-					'PRs-AI: Failed to load config - invalid response:',
-					response
-				);
-				this.apiConfig = null;
-				this.generationRules = null;
-			}
-		} catch (error) {
-			console.error('PRs-AI: Failed to load config:', error);
-			this.apiConfig = null;
-			this.generationRules = null;
-		}
-	}
+    // Remove existing button if any
+    if (this.generateButton) {
+      this.generateButton.remove();
+    }
 
-	private async injectUI() {
-		console.log('PRs-AI: Attempting to inject UI...');
-		// Wait for the PR form elements to appear as GitHub lazily renders parts of the page
-		const { titleInput, descriptionTextarea } = await this.waitForPRElements();
-		if (!titleInput || !descriptionTextarea) {
-			console.warn('PRs-AI: PR form elements not found after waiting.');
-			return;
-		}
-
-		console.log('PRs-AI: Creating generate button...');
-		// Create and inject the generate button
-		this.createGenerateButton(titleInput, descriptionTextarea);
-	}
-
-	private waitForPRElements(): Promise<{
-		titleInput: HTMLInputElement | null;
-		descriptionTextarea: HTMLTextAreaElement | null;
-	}> {
-		const titleSelector =
-			'#pull_request_title, input[name="pull_request[title]"]';
-		const bodySelector =
-			'#pull_request_body, textarea[name="pull_request[body]"]';
-
-		const findNow = () => ({
-			titleInput: document.querySelector(
-				titleSelector
-			) as HTMLInputElement | null,
-			descriptionTextarea: document.querySelector(
-				bodySelector
-			) as HTMLTextAreaElement | null
-		});
-
-		const initial = findNow();
-		if (initial.titleInput && initial.descriptionTextarea) {
-			return Promise.resolve(initial);
-		}
-
-		return new Promise((resolve) => {
-			const timeout = setTimeout(() => {
-				observer.disconnect();
-				resolve(findNow());
-			}, 10000); // 10s safety timeout
-
-			const observer = new MutationObserver(() => {
-				const current = findNow();
-				if (current.titleInput && current.descriptionTextarea) {
-					clearTimeout(timeout);
-					observer.disconnect();
-					resolve(current);
-				}
-			});
-
-			observer.observe(document.body, { childList: true, subtree: true });
-		});
-	}
-
-	private createGenerateButton(
-		titleInput: HTMLInputElement,
-		descriptionTextarea: HTMLTextAreaElement
-	) {
-		console.log('PRs-AI: Creating generate button...');
-
-		// Remove existing button if any
-		if (this.generateButton) {
-			this.generateButton.remove();
-		}
-
-		// Create button container
-		const buttonContainer = document.createElement('div');
-		buttonContainer.className = 'prs-ai-container';
-		buttonContainer.innerHTML = `
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'prs-ai-container';
+    buttonContainer.innerHTML = `
       <div class="prs-ai-button-group">
         <button type="button" class="prs-ai-generate-btn" ${
-					!this.hasValidConfig() ? 'disabled' : ''
-				}>
+          !this.hasValidConfig() ? 'disabled' : ''
+        }>
           ${createIconElement('star', 16)}
           ${!this.hasValidConfig() ? 'Setup API Key' : 'Generate with AI'}
         </button>
@@ -192,393 +133,402 @@ class GitHubPRGenerator {
       <div class="prs-ai-status" style="display: none;"></div>
     `;
 
-		// Strategy 1: Insert after the description area (preferred location)
-		let inserted = false;
+    // Platform-specific insertion strategies
+    let inserted = false;
 
-		// Look for the tab-container that contains the description textarea
-		const tabContainer = descriptionTextarea.closest('tab-container');
-		if (tabContainer && !inserted) {
-			console.log('PRs-AI: Inserting button after tab-container');
-			tabContainer.parentNode?.insertBefore(
-				buttonContainer,
-				tabContainer.nextSibling
-			);
-			inserted = true;
-		}
+    if (this.platform === 'github') {
+      inserted = this.insertButtonForGitHub(
+        buttonContainer,
+        descriptionTextarea,
+      );
+    } else if (this.platform === 'gitlab') {
+      inserted = this.insertButtonForGitLab(
+        buttonContainer,
+        descriptionTextarea,
+      );
+    }
+    if (!inserted) {
+      const parent = descriptionTextarea.parentNode;
+      if (parent) {
+        console.log(
+          'PRs-AI: Fallback - Inserting button after textarea parent',
+        );
+        parent.insertBefore(buttonContainer, descriptionTextarea.nextSibling);
+        inserted = true;
+      }
+    }
 
-		// Strategy 2: Insert after the CommentBox container
-		if (!inserted) {
-			const commentBox = descriptionTextarea.closest('.CommentBox-container');
-			if (commentBox) {
-				console.log('PRs-AI: Inserting button after CommentBox-container');
-				commentBox.parentNode?.insertBefore(
-					buttonContainer,
-					commentBox.nextSibling
-				);
-				inserted = true;
-			}
-		}
+    if (inserted) {
+      console.log('PRs-AI: Button successfully inserted');
+      this.generateButton = buttonContainer;
+      this.setupEventListeners(titleInput, descriptionTextarea);
+      // In case the config has finished loading already, reflect the state
+      this.updateGenerateButtonState();
+    } else {
+      console.error('PRs-AI: Failed to insert button');
+    }
+  }
 
-		// Strategy 3: Insert before the submit button area
-		if (!inserted) {
-			const submitButtonArea = document.querySelector(
-				'.d-flex.flex-justify-end.flex-items-center.flex-wrap'
-			);
-			if (submitButtonArea) {
-				console.log('PRs-AI: Inserting button before submit area');
-				submitButtonArea.parentNode?.insertBefore(
-					buttonContainer,
-					submitButtonArea
-				);
-				inserted = true;
-			}
-		}
+  private insertButtonForGitHub(
+    buttonContainer: HTMLElement,
+    descriptionTextarea: HTMLTextAreaElement,
+  ): boolean {
+    // Strategy 1: Insert after the tab-container that contains the description textarea
+    const tabContainer = descriptionTextarea.closest('tab-container');
+    if (tabContainer) {
+      console.log('PRs-AI: Inserting button after tab-container');
+      tabContainer.parentNode?.insertBefore(
+        buttonContainer,
+        tabContainer.nextSibling,
+      );
+      return true;
+    }
 
-		// Strategy 4: Find the form and insert before the submit buttons
-		if (!inserted) {
-			const form = descriptionTextarea.closest('form');
-			const btnGroup = form?.querySelector('.BtnGroup, .btn-primary');
-			if (btnGroup && btnGroup.parentNode) {
-				console.log('PRs-AI: Inserting button before BtnGroup');
-				btnGroup.parentNode.insertBefore(buttonContainer, btnGroup);
-				inserted = true;
-			}
-		}
+    // Strategy 2: Insert after the CommentBox container
+    const commentBox = descriptionTextarea.closest('.CommentBox-container');
+    if (commentBox) {
+      console.log('PRs-AI: Inserting button after CommentBox-container');
+      commentBox.parentNode?.insertBefore(
+        buttonContainer,
+        commentBox.nextSibling,
+      );
+      return true;
+    }
 
-		// Strategy 5: Fallback - insert after textarea parent
-		if (!inserted) {
-			const parent = descriptionTextarea.parentNode;
-			if (parent) {
-				console.log(
-					'PRs-AI: Fallback - Inserting button after textarea parent'
-				);
-				parent.insertBefore(buttonContainer, descriptionTextarea.nextSibling);
-				inserted = true;
-			}
-		}
+    // Strategy 3: Insert before the submit button area
+    const submitButtonArea = document.querySelector(
+      '.d-flex.flex-justify-end.flex-items-center.flex-wrap',
+    );
+    if (submitButtonArea) {
+      console.log('PRs-AI: Inserting button before submit area');
+      submitButtonArea.parentNode?.insertBefore(
+        buttonContainer,
+        submitButtonArea,
+      );
+      return true;
+    }
 
-		if (inserted) {
-			console.log('PRs-AI: Button successfully inserted');
-			this.generateButton = buttonContainer;
-			this.setupEventListeners(titleInput, descriptionTextarea);
-			// In case the config has finished loading already, reflect the state
-			this.updateGenerateButtonState();
-		} else {
-			console.error('PRs-AI: Failed to insert button');
-		}
-	}
+    // Strategy 4: Find the form and insert before the submit buttons
+    const form = descriptionTextarea.closest('form');
+    const btnGroup = form?.querySelector('.BtnGroup, .btn-primary');
+    if (btnGroup && btnGroup.parentNode) {
+      console.log('PRs-AI: Inserting button before BtnGroup');
+      btnGroup.parentNode.insertBefore(buttonContainer, btnGroup);
+      return true;
+    }
 
-	private setupEventListeners(
-		titleInput: HTMLInputElement,
-		descriptionTextarea: HTMLTextAreaElement
-	) {
-		if (!this.generateButton) return;
+    return false;
+  }
 
-		const generateBtn = this.generateButton.querySelector(
-			'.prs-ai-generate-btn'
-		) as HTMLButtonElement;
-		const regenerateBtn = this.generateButton.querySelector(
-			'.prs-ai-regenerate-btn'
-		) as HTMLButtonElement;
-		const settingsBtn = this.generateButton.querySelector(
-			'.prs-ai-settings-btn'
-		) as HTMLButtonElement;
-		const statusDiv = this.generateButton.querySelector(
-			'.prs-ai-status'
-		) as HTMLDivElement;
+  private insertButtonForGitLab(
+    buttonContainer: HTMLElement,
+    descriptionTextarea: HTMLTextAreaElement,
+  ): boolean {
+    // Strategy 1: Insert after the markdown editor container
+    const editorContainer = descriptionTextarea.closest(
+      '.md-area, .js-md-write-button',
+    );
+    if (editorContainer) {
+      console.log('PRs-AI: GitLab - Inserting button after editor container');
+      editorContainer.parentNode?.insertBefore(
+        buttonContainer,
+        editorContainer.nextSibling,
+      );
+      return true;
+    }
 
-		generateBtn.addEventListener('click', async () => {
-			if (!this.hasValidConfig()) {
-				chrome.runtime.sendMessage({ action: 'openOptions' });
-				return;
-			}
+    // Strategy 2: Insert before GitLab's form actions
+    const formActions = document.querySelector(
+      '.form-actions, .mr-form-actions',
+    );
+    if (formActions) {
+      console.log('PRs-AI: GitLab - Inserting button before form actions');
+      formActions.parentNode?.insertBefore(buttonContainer, formActions);
+      return true;
+    }
 
-			await this.generatePRContent(
-				titleInput,
-				descriptionTextarea,
-				statusDiv,
-				regenerateBtn
-			);
-		});
+    // Strategy 3: Insert after the description field container
+    const fieldContainer = descriptionTextarea.closest('.form-group');
+    if (fieldContainer) {
+      console.log('PRs-AI: GitLab - Inserting button after field container');
+      fieldContainer.parentNode?.insertBefore(
+        buttonContainer,
+        fieldContainer.nextSibling,
+      );
+      return true;
+    }
 
-		regenerateBtn.addEventListener('click', async () => {
-			await this.generatePRContent(
-				titleInput,
-				descriptionTextarea,
-				statusDiv,
-				regenerateBtn
-			);
-		});
+    return false;
+  }
 
-		settingsBtn.addEventListener('click', () => {
-			chrome.runtime.sendMessage({ action: 'openOptions' });
-		});
-	}
+  private setupEventListeners(
+    titleInput: HTMLInputElement,
+    descriptionTextarea: HTMLTextAreaElement,
+  ) {
+    if (!this.generateButton) return;
 
-	private async generatePRContent(
-		titleInput: HTMLInputElement,
-		descriptionTextarea: HTMLTextAreaElement,
-		statusDiv: HTMLDivElement,
-		regenerateBtn: HTMLButtonElement
-	) {
-		console.log('PRs-AI: Starting PR content generation...', {
-			apiConfig: this.apiConfig,
-			generationRules: this.generationRules
-		});
+    const generateBtn = this.generateButton.querySelector(
+      '.prs-ai-generate-btn',
+    ) as HTMLButtonElement;
+    const regenerateBtn = this.generateButton.querySelector(
+      '.prs-ai-regenerate-btn',
+    ) as HTMLButtonElement;
+    const settingsBtn = this.generateButton.querySelector(
+      '.prs-ai-settings-btn',
+    ) as HTMLButtonElement;
+    const statusDiv = this.generateButton.querySelector(
+      '.prs-ai-status',
+    ) as HTMLDivElement;
 
-		if (!this.apiConfig || !this.generationRules) {
-			console.error('PRs-AI: Missing config:', {
-				hasApiConfig: !!this.apiConfig,
-				hasGenerationRules: !!this.generationRules
-			});
-			this.showStatus(statusDiv, 'Please configure API keys first', 'error');
-			return;
-		}
+    generateBtn.addEventListener('click', async () => {
+      if (!this.hasValidConfig()) {
+        chrome.runtime.sendMessage({ action: 'openOptions' });
+        return;
+      }
 
-		// Additional validation for API keys
-		const hasValidKey =
-			this.apiConfig.openai?.key || this.apiConfig.gemini?.key;
-		if (!hasValidKey) {
-			console.error('PRs-AI: No valid API keys found:', {
-				openaiKey: this.apiConfig.openai?.key ? '***' : 'missing',
-				geminiKey: this.apiConfig.gemini?.key ? '***' : 'missing'
-			});
-			this.showStatus(
-				statusDiv,
-				'Please configure valid API keys first',
-				'error'
-			);
-			return;
-		}
+      await this.generatePRContent(
+        titleInput,
+        descriptionTextarea,
+        statusDiv,
+        regenerateBtn,
+      );
+    });
 
-		try {
-			this.showStatus(statusDiv, 'Generating PR content...', 'loading');
+    regenerateBtn.addEventListener('click', async () => {
+      await this.generatePRContent(
+        titleInput,
+        descriptionTextarea,
+        statusDiv,
+        regenerateBtn,
+      );
+    });
 
-			// Extract PR data from the page
-			const prData = await this.extractPRData();
-			console.log('PRs-AI: Extracted PR data:', prData);
+    settingsBtn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ action: 'openOptions' });
+    });
+  }
 
-			// Check for existing template
-			const existingTemplate =
-				this.extractExistingTemplate(descriptionTextarea);
-			console.log('PRs-AI: Existing template:', existingTemplate);
+  private async generatePRContent(
+    titleInput: HTMLInputElement,
+    descriptionTextarea: HTMLTextAreaElement,
+    statusDiv: HTMLDivElement,
+    regenerateBtn: HTMLButtonElement,
+  ) {
+    console.log('PRs-AI: Starting PR content generation...', {
+      apiConfig: this.apiConfig,
+      generationRules: this.generationRules,
+    });
 
-			// Generate content using AI
-			console.log('PRs-AI: Calling AI service...');
-			const result = await AIService.generatePRContent(
-				prData,
-				this.generationRules,
-				this.apiConfig,
-				existingTemplate
-			);
-			console.log('PRs-AI: AI service result:', result);
+    if (!this.apiConfig || !this.generationRules) {
+      console.error('PRs-AI: Missing config:', {
+        hasApiConfig: !!this.apiConfig,
+        hasGenerationRules: !!this.generationRules,
+      });
+      this.showStatus(statusDiv, 'Please configure API keys first', 'error');
+      return;
+    }
 
-			// Update the form fields
-			titleInput.value = result.title;
-			titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+    // Additional validation for API keys
+    const hasValidKey =
+      this.apiConfig.openai?.key || this.apiConfig.gemini?.key;
+    if (!hasValidKey) {
+      console.error('PRs-AI: No valid API keys found:', {
+        openaiKey: this.apiConfig.openai?.key ? '***' : 'missing',
+        geminiKey: this.apiConfig.gemini?.key ? '***' : 'missing',
+      });
+      this.showStatus(
+        statusDiv,
+        'Please configure valid API keys first',
+        'error',
+      );
+      return;
+    }
 
-			descriptionTextarea.value = result.description;
-			descriptionTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+    try {
+      this.showStatus(statusDiv, 'Generating PR content...', 'loading');
 
-			this.showStatus(
-				statusDiv,
-				'PR content generated successfully!',
-				'success'
-			);
-			regenerateBtn.style.display = 'inline-flex';
-		} catch (error) {
-			console.error('PRs-AI: Generation error:', error);
-			this.showStatus(
-				statusDiv,
-				`Failed to generate: ${
-					error instanceof Error ? error.message : 'Unknown error'
-				}`,
-				'error'
-			);
-		}
-	}
+      // Extract PR data from the page
+      const prData = await this.extractPRData();
+      console.log('PRs-AI: Extracted PR data:', prData);
 
-	private async extractPRData(): Promise<PRData> {
-		// Get repository info from URL
-		const urlParts = window.location.pathname.split('/');
-		const owner = urlParts[1];
-		const repo = urlParts[2];
+      // Check for existing template
+      const existingTemplate =
+        this.extractExistingTemplate(descriptionTextarea);
+      console.log('PRs-AI: Existing template:', existingTemplate);
 
-		// Extract branch information
-		const compareParts = window.location.pathname.match(
-			/compare\/(.+?)\.\.\.(.+)/
-		);
-		const baseBranch = compareParts ? compareParts[1] : 'main';
-		const headBranch = compareParts ? compareParts[2] : 'feature';
+      // Generate content using AI
+      console.log('PRs-AI: Calling AI service...');
+      const result = await AIService.generatePRContent(
+        prData,
+        this.generationRules,
+        this.apiConfig,
+        existingTemplate,
+      );
+      console.log('PRs-AI: AI service result:', result);
 
-		// Extract file changes from the compare view
-		const changes = this.extractFileChanges();
+      // Update the form fields
+      titleInput.value = result.title;
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-		// Extract commit messages
-		const commitMessages = this.extractCommitMessages();
+      descriptionTextarea.value = result.description;
+      descriptionTextarea.dispatchEvent(new Event('input', { bubbles: true }));
 
-		return {
-			title: '',
-			description: '',
-			changes,
-			commitMessages,
-			baseBranch,
-			headBranch
-		};
-	}
+      this.showStatus(
+        statusDiv,
+        'PR content generated successfully!',
+        'success',
+      );
+      regenerateBtn.style.display = 'inline-flex';
+    } catch (error) {
+      console.error('PRs-AI: Generation error:', error);
+      this.showStatus(
+        statusDiv,
+        `Failed to generate: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+        'error',
+      );
+    }
+  }
 
-	private extractFileChanges(): CodeChange[] {
-		const changes: CodeChange[] = [];
+  private async extractPRData(): Promise<PRData> {
+    return this.extractor.extractPRData();
+  }
 
-		// Look for file change elements in GitHub's UI
-		const fileElements = document.querySelectorAll(
-			'[data-tagsearch-path], .file-header[data-path]'
-		);
+  private extractExistingTemplate(descriptionTextarea: HTMLTextAreaElement): {
+    title?: string;
+    description?: string;
+  } {
+    const existingContent = descriptionTextarea.value.trim();
 
-		fileElements.forEach((element) => {
-			const filename =
-				element.getAttribute('data-tagsearch-path') ||
-				element.getAttribute('data-path') ||
-				'';
+    if (existingContent && existingContent.length > 0) {
+      return { description: existingContent };
+    }
 
-			if (!filename) return;
+    return {};
+  }
 
-			// Extract addition/deletion counts
-			const statsElement = element.querySelector('.diffstat');
-			const additions = parseInt(
-				statsElement?.getAttribute('data-additions') || '0'
-			);
-			const deletions = parseInt(
-				statsElement?.getAttribute('data-deletions') || '0'
-			);
+  private hasValidConfig(): boolean {
+    console.log('PRs-AI: Checking config validity:', {
+      apiConfig: this.apiConfig,
+      apiConfigType: typeof this.apiConfig,
+      openaiConfig: this.apiConfig?.openai,
+      geminiConfig: this.apiConfig?.gemini,
+      openaiKey: this.apiConfig?.openai?.key,
+      geminiKey: this.apiConfig?.gemini?.key,
+    });
 
-			// Determine file status
-			let status: 'added' | 'modified' | 'deleted' | 'renamed' = 'modified';
-			if (element.classList.contains('file-added')) status = 'added';
-			else if (element.classList.contains('file-deleted')) status = 'deleted';
-			else if (element.classList.contains('file-renamed')) status = 'renamed';
+    const isValid = !!(
+      this.apiConfig &&
+      (this.apiConfig.openai?.key || this.apiConfig.gemini?.key)
+    );
 
-			changes.push({
-				filename,
-				additions,
-				deletions,
-				status
-			});
-		});
+    console.log('PRs-AI: Config is valid:', isValid);
+    return isValid;
+  }
 
-		return changes;
-	}
+  private updateGenerateButtonState() {
+    if (!this.generateButton) return;
+    const generateBtn = this.generateButton.querySelector(
+      '.prs-ai-generate-btn',
+    ) as HTMLButtonElement | null;
+    if (!generateBtn) return;
 
-	private extractCommitMessages(): string[] {
-		const commitElements = document.querySelectorAll(
-			'.commit-message, .commit-title'
-		);
-		const messages: string[] = [];
+    const hasConfig = this.hasValidConfig();
+    generateBtn.disabled = !hasConfig;
+    const label = hasConfig ? 'Generate with AI' : 'Setup API Key';
+    // Re-set innerHTML to update the label while keeping the icon
+    generateBtn.innerHTML = `${createIconElement('star', 16)} ${label}`;
+  }
 
-		commitElements.forEach((element) => {
-			const message = element.textContent?.trim();
-			if (message && !messages.includes(message)) {
-				messages.push(message);
-			}
-		});
+  private showStatus(
+    statusDiv: HTMLDivElement,
+    message: string,
+    type: 'success' | 'error' | 'loading',
+  ) {
+    statusDiv.textContent = message;
+    statusDiv.className = `prs-ai-status prs-ai-status--${type}`;
+    statusDiv.style.display = 'block';
 
-		return messages;
-	}
-
-	private extractExistingTemplate(descriptionTextarea: HTMLTextAreaElement): {
-		title?: string;
-		description?: string;
-	} {
-		const existingContent = descriptionTextarea.value.trim();
-
-		if (existingContent && existingContent.length > 0) {
-			return { description: existingContent };
-		}
-
-		return {};
-	}
-
-	private hasValidConfig(): boolean {
-		console.log('PRs-AI: Checking config validity:', {
-			apiConfig: this.apiConfig,
-			apiConfigType: typeof this.apiConfig,
-			openaiConfig: this.apiConfig?.openai,
-			geminiConfig: this.apiConfig?.gemini,
-			openaiKey: this.apiConfig?.openai?.key,
-			geminiKey: this.apiConfig?.gemini?.key
-		});
-
-		const isValid = !!(
-			this.apiConfig &&
-			(this.apiConfig.openai?.key || this.apiConfig.gemini?.key)
-		);
-
-		console.log('PRs-AI: Config is valid:', isValid);
-		return isValid;
-	}
-
-	private updateGenerateButtonState() {
-		if (!this.generateButton) return;
-		const generateBtn = this.generateButton.querySelector(
-			'.prs-ai-generate-btn'
-		) as HTMLButtonElement | null;
-		if (!generateBtn) return;
-
-		const hasConfig = this.hasValidConfig();
-		generateBtn.disabled = !hasConfig;
-		const label = hasConfig ? 'Generate with AI' : 'Setup API Key';
-		// Re-set innerHTML to update the label while keeping the icon
-		generateBtn.innerHTML = `${createIconElement('star', 16)} ${label}`;
-	}
-
-	private showStatus(
-		statusDiv: HTMLDivElement,
-		message: string,
-		type: 'success' | 'error' | 'loading'
-	) {
-		statusDiv.textContent = message;
-		statusDiv.className = `prs-ai-status prs-ai-status--${type}`;
-		statusDiv.style.display = 'block';
-
-		if (type !== 'loading') {
-			setTimeout(() => {
-				statusDiv.style.display = 'none';
-			}, 3000);
-		}
-	}
+    if (type !== 'loading') {
+      setTimeout(() => {
+        statusDiv.style.display = 'none';
+      }, 3000);
+    }
+  }
 }
 
 // Initialize the PR generator
 console.log('PRs-AI: Content script loaded');
-const prGenerator = new GitHubPRGenerator();
 
-// Run initialization
-prGenerator.init();
+// Prevent multiple initialization
+if (!(window as any).__PRsAI_Initialized) {
+  (window as any).__PRsAI_Initialized = true;
 
-// Handle navigation changes (for SPA behavior) with more aggressive detection
-let lastUrl = location.href;
-const handleUrlChange = () => {
-	const url = location.href;
-	if (url !== lastUrl) {
-		console.log('PRs-AI: URL changed from', lastUrl, 'to', url);
-		lastUrl = url;
-		// Reset initialization flag to allow re-initialization on new pages
-		(prGenerator as any).isInitialized = false;
-		// Wait a bit longer for GitHub's SPA to settle
-		setTimeout(() => prGenerator.init(), 2000);
-	}
-};
+  const prGenerator = new UniversalPRGenerator();
 
-// Use multiple detection methods for URL changes
-new MutationObserver(() => {
-	handleUrlChange();
-}).observe(document, { subtree: true, childList: true });
+  // Run initialization
+  prGenerator.init();
 
-// Also listen for popstate events
-window.addEventListener('popstate', handleUrlChange);
+  // Handle navigation changes (for SPA behavior) with more aggressive detection
+  let lastUrl = location.href;
+  const handleUrlChange = () => {
+    const url = location.href;
+    if (url !== lastUrl) {
+      console.log('PRs-AI: URL changed from', lastUrl, 'to', url);
+      lastUrl = url;
+      // Reset initialization flag to allow re-initialization on new pages
+      (prGenerator as any).isInitialized = false;
+      // Wait a bit longer for GitLab's SPA to settle
+      setTimeout(() => prGenerator.init(), 2000);
+    }
+  };
 
-// Listen for GitHub's custom navigation events if they exist
-document.addEventListener('pjax:end', handleUrlChange);
-document.addEventListener('turbo:load', handleUrlChange);
+  // Use multiple detection methods for URL changes
+  new MutationObserver(() => {
+    handleUrlChange();
+  }).observe(document, { subtree: true, childList: true });
+
+  // Also listen for popstate events
+  window.addEventListener('popstate', handleUrlChange);
+
+  // Listen for GitLab/GitHub's custom navigation events if they exist
+  document.addEventListener('pjax:end', handleUrlChange);
+  document.addEventListener('turbo:load', handleUrlChange);
+
+  // Add debugging function to global scope for testing
+  (window as any).PRsAIDebug = {
+    platform: prGenerator.platform,
+    config: prGenerator.config,
+    checkElements: () => {
+      const elements = prGenerator.extractor.getFormElements();
+      console.log('PRs-AI Debug: Form elements check:', {
+        titleInput: elements.titleInput,
+        descriptionTextarea: elements.descriptionTextarea,
+        titleFound: !!elements.titleInput,
+        descriptionFound: !!elements.descriptionTextarea,
+      });
+      return elements;
+    },
+    isPRPage: () => {
+      const result = PlatformDetector.isPRPage(prGenerator.platform);
+      console.log('PRs-AI Debug: isPRPage result:', result);
+      return result;
+    },
+    forceInit: () => {
+      console.log('PRs-AI Debug: Forcing initialization...');
+      (prGenerator as any).isInitialized = false;
+      prGenerator.init();
+    },
+    testSelectors: () => {
+      const selectors = prGenerator.config.selectors;
+      console.log('PRs-AI Debug: Testing selectors for', prGenerator.platform);
+      Object.entries(selectors).forEach(([key, selector]) => {
+        const element = document.querySelector(selector);
+        console.log(`  ${key}: ${selector} -> ${!!element}`);
+      });
+    },
+  };
+}
 
 export {};
