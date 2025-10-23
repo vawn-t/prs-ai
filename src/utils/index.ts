@@ -4,3 +4,6 @@ export * from './github.utils';
 export * from './string.utils';
 export * from './pr-generation.utils';
 export * from './icon.utils';
+export * from './platform-detector';
+export * from './github-extractor';
+export * from './gitlab-extractor';
