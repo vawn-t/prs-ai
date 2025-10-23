@@ -8,7 +8,7 @@ export const STORAGE_KEYS = {
 // Default Models
 export const DEFAULT_MODELS = {
   openai: 'gpt-3.5-turbo',
-  gemini: 'gemini-2.5-pro',
+  gemini: 'gemini-2.5-flash',
 } as const;
 
 // API Endpoints
@@ -16,6 +16,27 @@ export const API_ENDPOINTS = {
   OPENAI_MODELS: 'https://api.openai.com/v1/models',
   OPENAI_CHAT: 'https://api.openai.com/v1/chat/completions',
   GEMINI_MODELS: 'https://generativelanguage.googleapis.com/v1beta/models',
+} as const;
+
+// Gemini Models
+export const GEMINI_MODELS = {
+  'gemini-2.5-pro':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent',
+  'gemini-2.5-flash':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+  'gemini-2.5-flash-lite':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
+  'gemini-2.0-flash':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+  'gemini-2.0-flash-lite':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
+  // Legacy models for compatibility
+  'gemini-pro':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+  'gemini-1.5-pro':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
+  'gemini-1.5-flash':
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
 } as const;
 
 // Extension URLs

@@ -21,27 +21,14 @@ export const DEFAULT_RULES: PRGenerationRules = {
 
 export const DEFAULT_MODELS = {
   openai: 'gpt-3.5-turbo',
-  gemini: 'gemini-2.5-pro',
+  gemini: 'gemini-2.5-flash',
 };
 
 export class StorageService {
   static async getApiConfig(): Promise<ApiConfig | null> {
     try {
-      console.log(
-        'StorageService: Getting API config with key:',
-        STORAGE_KEYS.API_CONFIG,
-      );
       const result = await chrome.storage.sync.get(STORAGE_KEYS.API_CONFIG);
-      console.log('StorageService: Raw storage result:', result);
-
       const config = result[STORAGE_KEYS.API_CONFIG] || null;
-      console.log('StorageService: Returning config:', {
-        config,
-        hasConfig: !!config,
-        hasOpenai: !!config?.openai,
-        hasGemini: !!config?.gemini,
-      });
-
       return config;
     } catch (error) {
       console.error('StorageService: Error getting API config:', error);

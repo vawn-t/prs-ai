@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from '@constants';
+import { API_ENDPOINTS, GEMINI_MODELS, DEFAULT_MODELS } from '@constants';
 import { ApiConfig, PRData, PRGenerationRules } from './types';
 
 export class AIService {
@@ -34,51 +34,32 @@ export class AIService {
     apiConfig: ApiConfig,
     existingTemplate?: { title?: string; description?: string },
   ): Promise<{ title: string; description: string }> {
-    console.log('AIService: Starting generation with:', {
-      prData,
-      rules,
-      apiConfig: {
-        hasOpenai: !!apiConfig.openai,
-        hasGemini: !!apiConfig.gemini,
-        openaiHasKey: !!apiConfig.openai?.key,
-        geminiHasKey: !!apiConfig.gemini?.key,
-        openaiModel: apiConfig.openai?.model,
-        geminiModel: apiConfig.gemini?.model,
-      },
-      existingTemplate,
-    });
-
     const prompt = this.buildPrompt(prData, rules, existingTemplate);
-    console.log('AIService: Built prompt:', prompt);
 
     // Try OpenAI first, then Gemini
     if (apiConfig.openai?.key) {
       try {
-        console.log('AIService: Trying OpenAI...');
         const result = await this.callOpenAI(prompt, apiConfig.openai);
-        console.log('AIService: OpenAI success:', result);
         return result;
       } catch (error) {
         console.error('AIService: OpenAI API error:', error);
       }
-    } else {
-      console.log('AIService: No OpenAI key available');
     }
 
     if (apiConfig.gemini?.key) {
       try {
-        console.log('AIService: Trying Gemini...');
-        const result = await this.callGemini(prompt, apiConfig.gemini);
-        console.log('AIService: Gemini success:', result);
+        // Use default model if none configured
+        const geminiConfig = {
+          key: apiConfig.gemini.key,
+          model: apiConfig.gemini.model || DEFAULT_MODELS.gemini,
+        };
+        const result = await this.callGemini(prompt, geminiConfig);
         return result;
       } catch (error) {
         console.error('AIService: Gemini API error:', error);
       }
-    } else {
-      console.log('AIService: No Gemini key available');
     }
 
-    console.error('AIService: No working API keys found');
     throw new Error('No working API keys found');
   }
 
@@ -312,33 +293,34 @@ export class AIService {
     prompt: string,
     config: { key: string; model: string },
   ): Promise<{ title: string; description: string }> {
-    const response = await fetch(
-      `${API_ENDPOINTS.GEMINI_MODELS}/${config.model}:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': `${config.key}`,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text:
-                    prompt +
-                    '\n\nRespond with ONLY a valid JSON object containing "title" and "description" fields. Do not use markdown formatting or code blocks.',
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000,
-          },
-        }),
+    const endpoint = GEMINI_MODELS[config.model as keyof typeof GEMINI_MODELS];
+    if (!endpoint) {
+      throw new Error(`Unsupported Gemini model: ${config.model}`);
+    }
+
+    const response = await fetch(`${endpoint}?key=${config.key}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text:
+                  prompt +
+                  '\n\nRespond with ONLY a valid JSON object containing "title" and "description" fields. Do not use markdown formatting or code blocks.',
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000,
+        },
+      }),
+    });
 
     if (!response.ok) {
       throw new Error(`Gemini API error: ${response.status}`);
