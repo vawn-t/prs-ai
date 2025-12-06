@@ -18,6 +18,9 @@ class UniversalPRGenerator {
   private generateButton: HTMLElement | null = null;
   private apiConfig: ApiConfig | null = null;
   private generationRules: PRGenerationRules | null = null;
+  private observer: MutationObserver | null = null;
+  private checkTimeout: any = null;
+
   public platform = PlatformDetector.detectPlatform();
   public config = PlatformDetector.getPlatformConfig(this.platform);
   public extractor =
@@ -39,12 +42,75 @@ class UniversalPRGenerator {
       return;
     }
 
-    // Inject UI as soon as possible to show the button immediately,
-    // then load config in the background and update state.
-    await this.injectUI();
+    this.startFormObserver();
+
     this.loadConfig().then(() => this.updateGenerateButtonState());
 
     this.isInitialized = true;
+  }
+
+  private startFormObserver() {
+    if (this.observer) this.observer.disconnect();
+
+    this.observer = new MutationObserver(() => {
+      if (this.checkTimeout) clearTimeout(this.checkTimeout);
+      this.checkTimeout = setTimeout(() => this.checkAndInject(), 200);
+    });
+
+    this.observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    this.checkAndInject();
+  }
+
+  private checkAndInject() {
+    const { titleInput, descriptionTextarea } =
+      this.extractor.getFormElements();
+    let targetElement: HTMLElement | null = descriptionTextarea;
+    let isRichText = false;
+
+    if (titleInput) {
+      if (this.platform === 'gitlab') {
+        const isTextareaVisible =
+          descriptionTextarea &&
+          descriptionTextarea.offsetParent !== null &&
+          window.getComputedStyle(descriptionTextarea).display !== 'none';
+
+        if (!isTextareaVisible) {
+          const richTextEditor = document.querySelector(
+            '[data-testid="content-editor"]',
+          );
+          if (richTextEditor) {
+            targetElement = richTextEditor as HTMLElement;
+            isRichText = true;
+          } else if (descriptionTextarea) {
+            isRichText = true;
+          }
+        }
+      }
+
+      if (targetElement) {
+        const buttonExists =
+          this.generateButton && document.body.contains(this.generateButton);
+
+        if (!buttonExists) {
+          this.createGenerateButton(titleInput, targetElement, isRichText);
+        } else {
+          if (this.generateButton) {
+            this.generateButton.style.display = 'block';
+            this.updateButtonMode(isRichText);
+          }
+        }
+        return;
+      }
+    }
+
+    if (this.generateButton) {
+      this.generateButton.remove();
+      this.generateButton = null;
+    }
   }
 
   private isPRPage(): boolean {
@@ -76,33 +142,14 @@ class UniversalPRGenerator {
     }
   }
 
-  private async injectUI() {
-    console.log('PRs-AI: Attempting to inject UI...');
-    // Wait for the PR form elements to appear as GitHub lazily renders parts of the page
-    const { titleInput, descriptionTextarea } = await this.waitForPRElements();
-    if (!titleInput || !descriptionTextarea) {
-      console.warn('PRs-AI: PR form elements not found after waiting.');
-      return;
-    }
-
-    console.log('PRs-AI: Creating generate button...');
-    // Create and inject the generate button
-    this.createGenerateButton(titleInput, descriptionTextarea);
-  }
-
-  private waitForPRElements(): Promise<{
-    titleInput: HTMLInputElement | null;
-    descriptionTextarea: HTMLTextAreaElement | null;
-  }> {
-    return this.extractor.waitForElements();
-  }
-
   private createGenerateButton(
     titleInput: HTMLInputElement,
-    descriptionTextarea: HTMLTextAreaElement,
+    descriptionTextarea: HTMLElement,
+    isRichText: boolean = false,
   ) {
     console.log('PRs-AI: Creating generate button...', {
       platform: this.platform,
+      isRichText,
     });
 
     // Remove existing button if any
@@ -139,12 +186,12 @@ class UniversalPRGenerator {
     if (this.platform === 'github') {
       inserted = this.insertButtonForGitHub(
         buttonContainer,
-        descriptionTextarea,
+        descriptionTextarea as HTMLTextAreaElement,
       );
     } else if (this.platform === 'gitlab') {
       inserted = this.insertButtonForGitLab(
         buttonContainer,
-        descriptionTextarea,
+        descriptionTextarea as HTMLTextAreaElement,
       );
     }
     if (!inserted) {
@@ -161,11 +208,44 @@ class UniversalPRGenerator {
     if (inserted) {
       console.log('PRs-AI: Button successfully inserted');
       this.generateButton = buttonContainer;
-      this.setupEventListeners(titleInput, descriptionTextarea);
-      // In case the config has finished loading already, reflect the state
-      this.updateGenerateButtonState();
+
+      if (isRichText) {
+        this.updateButtonMode(true);
+      } else {
+        this.setupEventListeners(
+          titleInput,
+          descriptionTextarea as HTMLTextAreaElement,
+        );
+        // In case the config has finished loading already, reflect the state
+        this.updateGenerateButtonState();
+      }
     } else {
       console.error('PRs-AI: Failed to insert button');
+    }
+  }
+
+  private updateButtonMode(isRichText: boolean) {
+    if (!this.generateButton) return;
+
+    const generateBtn = this.generateButton.querySelector(
+      '.prs-ai-generate-btn',
+    ) as HTMLButtonElement;
+    const regenerateBtn = this.generateButton.querySelector(
+      '.prs-ai-regenerate-btn',
+    ) as HTMLButtonElement;
+
+    if (isRichText) {
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = `${createIconElement(
+        'star',
+        16,
+      )} Switch to Plain Text to Generate`;
+      generateBtn.title =
+        "Please switch to 'Plain text editing' mode to use AI generation";
+      regenerateBtn.style.display = 'none';
+    } else {
+      // Restore normal state
+      this.updateGenerateButtonState();
     }
   }
 
@@ -370,8 +450,18 @@ class UniversalPRGenerator {
       titleInput.value = result.title;
       titleInput.dispatchEvent(new Event('input', { bubbles: true }));
 
+      // For GitLab, we need to handle the textarea update carefully
+      // The textarea might be hidden or managed by Vue
       descriptionTextarea.value = result.description;
       descriptionTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+      descriptionTextarea.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Try to trigger Vue's input handler if it exists
+      const inputEvent = new Event('input', {
+        bubbles: true,
+        cancelable: true,
+      });
+      descriptionTextarea.dispatchEvent(inputEvent);
 
       this.showStatus(
         statusDiv,
